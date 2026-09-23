@@ -17,36 +17,37 @@ import java.io.IOException;
 @WebServlet(urlPatterns = "/register", loadOnStartup = 0)
 public final class RegisterServlet extends HttpServlet {
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        try {
-            AuthService service = authService(request);
-            AuthenticationResult result = service.register(
-                    request.getParameter("name"),
-                    request.getParameter("email"),
-                    request.getParameter("password"));
-            response.setStatus(HttpServletResponse.SC_CREATED);
-            response.setContentType("text/plain;charset=UTF-8");
-            response.getWriter().write("Registration successful for " + result.email());
-        } catch (IllegalArgumentException | AuthenticationException exception) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, exception.getMessage());
-        }
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+        request.setCharacterEncoding("UTF-8");
+        try {
+            String password = request.getParameter("password");
+            String confirmation = request.getParameter("confirmPassword");
+            if (password == null || !password.equals(confirmation)) {
+                throw new IllegalArgumentException("Passwords do not match");
+            }
+            AuthService service = authService(request);
+            service.register(request.getParameter("name"), request.getParameter("email"), password);
+            response.sendRedirect(request.getContextPath() + "/login?registered=true");
+        } catch (IllegalArgumentException | AuthenticationException exception) {
+            request.setAttribute("registerError", userMessage(exception));
+            request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+        }
     }
 
     private AuthService authService(HttpServletRequest request) {
-        DatabaseConnectionPool pool = pool(request);
-        return new AuthServiceImpl(new UserDaoImpl(pool));
-    }
-
-    private DatabaseConnectionPool pool(HttpServletRequest request) {
         Object pool = getServletContext().getAttribute(DatabaseConnectionPool.CONTEXT_ATTRIBUTE);
         if (!(pool instanceof DatabaseConnectionPool connectionPool)) {
-            throw new AuthenticationException("Database is unavailable");
+            throw new AuthenticationException("Registration is temporarily unavailable");
         }
-        return connectionPool;
+        return new AuthServiceImpl(new UserDaoImpl(connectionPool));
+    }
+
+    private String userMessage(RuntimeException exception) {
+        return exception.getMessage() == null ? "Registration could not be completed" : exception.getMessage();
     }
 }

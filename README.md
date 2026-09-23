@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, and **Commit 04: the authentication backend**. The polished authentication UI, authorization filters, product catalog, cart operations, checkout, reviews UI, and seller or administrator dashboards are intentionally deferred to later commits.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication backend, and **Commit 05: the authentication UI and complete authentication flow**. Authorization filters, product catalog, cart operations, checkout, reviews UI, and seller or administrator dashboards are intentionally deferred to later commits.
 
 ## Technology stack
 
@@ -39,13 +39,13 @@ HikariCP
 H2 Database
 ```
 
-## Authentication backend
+## Authentication flow
 
-The backend now includes a database-backed `User` model and `UserRole` enum with `BUYER`, `SELLER`, and `ADMIN` values. `UserDaoImpl` uses prepared JDBC statements through the shared HikariCP pool for user creation, email and ID lookup, duplicate checks, and enabled-status updates.
+The backend includes a database-backed `User` model and `UserRole` enum with `BUYER`, `SELLER`, and `ADMIN` values. `UserDaoImpl` uses prepared JDBC statements through the shared HikariCP pool. `AuthServiceImpl` validates and normalizes registration data, hashes passwords with BCrypt, rejects duplicate emails, and assigns `BUYER` to every public registration.
 
-`AuthServiceImpl` validates and normalizes registration data, hashes passwords with BCrypt, rejects duplicate emails, and assigns `BUYER` to every public registration. Public registration does not accept an arbitrary role and cannot create an administrator account. Login verifies BCrypt passwords, rejects disabled accounts, and returns a generic `Invalid email or password` failure for unknown emails or incorrect credentials.
+The user-facing flow is available through `/register`, `/login`, and `/logout`. Registration and login use POST forms, validation errors are returned to the JSP views without exposing SQL details, and successful registration redirects to login with a success message. Successful login regenerates the session ID and stores only the safe `AuthenticationResult` in HTTP Session. Logout invalidates the session and redirects to the public landing page. Public registration has no role selector, and authorization filters will be added in a later commit.
 
-The minimal backend endpoints are `/register`, `/login`, and `/logout`. `LoginServlet` uses HTTP Session and stores only an `AuthenticationResult` containing user ID, name, email, and role. Passwords and password hashes are never placed in session state. The login servlet changes the session ID when authentication succeeds to reduce session fixation risk. Final JSP screens and authorization filters belong to later commits.
+The JSP views are located under `src/main/webapp/WEB-INF/views/`. Shared session-aware navigation is in `includes/header.jsp`, authentication styling is in `src/main/webapp/css/auth.css`, and password confirmation uses minimal client-side JavaScript in `src/main/webapp/js/auth.js`. Server-side validation remains authoritative.
 
 ## Database infrastructure
 
@@ -68,19 +68,20 @@ The structural schema remains at `src/main/resources/schema.sql` and creates `us
 
 No production credentials are committed. Local H2 database artifacts and `target/` are ignored by Git. Automated tests use isolated in-memory H2 databases and never depend on a local database file.
 
-## Logging
+## Logging and security
 
-SLF4J with Logback records pool initialization, schema initialization, startup/shutdown, and failures. Database passwords, password hashes, session IDs, and other secrets are never logged. Development logging is configured in `src/main/resources/logback.xml`.
+SLF4J with Logback records pool initialization, schema initialization, startup/shutdown, and failures. Database passwords, password hashes, session IDs, and other secrets are never logged or placed in JSP/session state. Credential submissions use POST, logout uses POST, and login session ID regeneration protects against session fixation.
 
 ## Local setup
 
 1. Install Java 17 and Maven.
 2. Clone this repository.
-3. Run `mvn clean test` to verify the schema, infrastructure, DAO, password, registration, and login behavior.
+3. Run `mvn clean test` to verify the schema, infrastructure, DAO, password, registration, login, and existing authentication behavior.
 4. Run `mvn package` to build the WAR.
-5. For the web foundation, copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
+5. Copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
+6. Open `/register` or `/login` from the public landing page to exercise the authentication flow.
 
-At web-application startup, the listener initializes the configured H2 schema automatically. The authentication backend is ready for the later authentication UI and authorization work, but those modules are not yet implemented.
+At web-application startup, the listener initializes the configured H2 schema automatically. Product and other marketplace modules are not yet implemented.
 
 ## Maven commands
 

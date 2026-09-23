@@ -1,32 +1,31 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AshokMart | Foundation</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.5; margin: 0; padding: 2rem; color: #1f2937; background: #f8fafc; }
-        main { max-width: 680px; margin: 3rem auto; padding: 2rem; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; }
-        h1 { margin-top: 0; color: #111827; }
-        .tagline { color: #4b5563; font-size: 1.1rem; }
-        dl { display: grid; grid-template-columns: 9rem 1fr; gap: .6rem 1rem; margin-top: 2rem; }
-        dt { font-weight: 700; }
-        dd { margin: 0; }
-    </style>
+    <title>AshokMart | Your marketplace, your choice</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/auth.css">
 </head>
 <body>
-<main>
-    <h1>AshokMart</h1>
-    <p class="tagline">Your marketplace, your choice.</p>
-
-    <section aria-labelledby="status-heading">
-        <h2 id="status-heading">Development Status</h2>
-        <dl>
-            <dt>Application:</dt><dd>AshokMart</dd>
-            <dt>Status:</dt><dd>Foundation Ready</dd>
-            <dt>Architecture:</dt><dd>JSP → Servlet → Service → DAO → JDBC → H2</dd>
-        </dl>
+<jsp:include page="/WEB-INF/views/includes/header.jsp" />
+<main class="home-layout">
+    <section class="home-card" aria-labelledby="home-heading">
+        <p class="eyebrow">Foundation ready</p>
+        <h1 id="home-heading">Your marketplace, your choice.</h1>
+        <p class="lede">AshokMart is getting ready for a better way to browse, buy, and sell. Authentication is now available while the marketplace modules are built.</p>
+        <div class="home-actions">
+            <c:choose>
+                <c:when test="${empty sessionScope.authenticatedUser}">
+                    <a href="${pageContext.request.contextPath}/login">Log in</a>
+                    <a href="${pageContext.request.contextPath}/register">Create an account</a>
+                </c:when>
+                <c:otherwise>
+                    <span class="account-label">Signed in as ${sessionScope.authenticatedUser.name}</span>
+                </c:otherwise>
+            </c:choose>
+        </div>
     </section>
 </main>
 </body>

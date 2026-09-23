@@ -5,4 +5,20 @@ public record AuthenticationResult(long userId, String name, String email, UserR
     public static AuthenticationResult from(User user) {
         return new AuthenticationResult(user.getId(), user.getName(), user.getEmail(), user.getRole());
     }
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
 }
