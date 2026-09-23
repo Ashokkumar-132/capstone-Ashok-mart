@@ -1,6 +1,10 @@
 # Maven
 target/
 
+# Local H2 databases
+*.mv.db
+*.trace.db
+
 # IDEs
 .idea/
 *.iml

@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation and **Commit 02: the database schema foundation**. Authentication, product CRUD, cart services, checkout, orders workflow, reviews UI, and seller or administrator dashboards are intentionally not implemented yet.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, the Commit 02 database schema foundation, and **Commit 03: H2 + HikariCP database infrastructure**. Authentication, registration/login, product CRUD, cart operations, checkout, reviews UI, and seller or administrator dashboards are intentionally deferred to later commits.
 
 ## Technology stack
 
@@ -8,7 +8,7 @@ AshokMart is a Java-based multi-vendor e-commerce web application. The repositor
 - Maven
 - Apache Tomcat 9
 - Java Servlets, JSP, and JSTL
-- JDBC with HikariCP (pooling is reserved for a later infrastructure commit)
+- JDBC with HikariCP
 - H2 Database
 - Gson and jBCrypt
 - JUnit 5 and Mockito
@@ -39,41 +39,42 @@ HikariCP
 H2 Database
 ```
 
-## Database foundation
+## Database infrastructure
 
-The structural H2 schema is located at `src/main/resources/schema.sql`. It creates the following entities:
+The structural schema remains at `src/main/resources/schema.sql` and creates `users`, `categories`, `products`, `cart`, `cart_items`, `orders`, `order_items`, and `reviews`. It includes primary keys, foreign keys, unique constraints, role/status checks, numeric checks, and referential-integrity rules from Commit 02.
 
-- `users`
-- `categories`
-- `products`
-- `cart`
-- `cart_items`
-- `orders`
-- `order_items`
-- `reviews`
+`DatabaseConnectionPool` owns one application-wide HikariCP datasource. Future DAOs can use `pool.getConnection()` in try-with-resources; closing that connection returns it to HikariCP. The pool is not recreated per request and is closed at web-application shutdown.
 
-The schema includes primary keys, foreign keys, unique constraints, sensible not-null constraints, non-negative price and monetary checks, positive quantity checks, supported user roles, supported order statuses, review rating bounds, and duplicate prevention for cart products and buyer/product reviews. Foreign keys preserve historical order information rather than casually cascading deletes. Cart items may be removed with their cart, and a user's cart is removed with that user.
+`DatabaseInitializer` reads the existing `schema.sql` resource and executes it through a pooled datasource. `DatabaseContextListener` creates the pool and initializes the schema once during application startup, stores the pool in the servlet context, and closes it during shutdown. No business logic is placed in the listener.
 
-No fake marketplace or production seed data is included.
+## Configuration
 
-## Schema initialization
+`DatabaseConfig` loads system properties first, then environment variables, then safe local defaults. Supported settings are:
 
-`com.ashokmart.util.SchemaInitializer` reads `schema.sql` from the classpath and executes it with a plain JDBC connection. The no-argument initializer uses the local development/test configuration in `DatabaseConfig`:
+| Setting | System property | Environment variable | Default |
+| --- | --- | --- | --- |
+| JDBC URL | `ashokmart.db.url` | `ASHOKMART_DB_URL` | `jdbc:h2:./data/ashokmart;DB_CLOSE_ON_EXIT=FALSE` |
+| Username | `ashokmart.db.user` | `ASHOKMART_DB_USER` | `sa` |
+| Password | `ashokmart.db.password` | `ASHOKMART_DB_PASSWORD` | empty |
+| Maximum pool size | `ashokmart.db.maxPoolSize` | `ASHOKMART_DB_MAX_POOL_SIZE` | `10` |
+| Minimum idle | `ashokmart.db.minIdle` | `ASHOKMART_DB_MIN_IDLE` | `2` |
+| Connection timeout | `ashokmart.db.connectionTimeoutMs` | `ASHOKMART_DB_CONNECTION_TIMEOUT_MS` | `30000` ms |
 
-```text
-ASHOKMART_DB_URL      default: jdbc:h2:mem:ashokmart_dev;DB_CLOSE_DELAY=-1
-ASHOKMART_DB_USER     default: sa
-ASHOKMART_DB_PASSWORD default: empty
-```
+No production credentials are committed. Local file-based H2 artifacts such as `*.mv.db` and `*.trace.db` are ignored by Git. Automated tests use isolated in-memory H2 databases and never depend on the local database file.
 
-These environment variables are intended for local or future deployment configuration; no production credentials are stored in the repository. HikariCP pooling and DAO/service integration will be added in later commits.
+## Logging
+
+SLF4J with Logback records pool initialization, schema initialization, startup/shutdown, and failures. Database passwords and other secrets are never logged. Development logging is configured in `src/main/resources/logback.xml`.
 
 ## Local setup
 
 1. Install Java 17 and Maven.
 2. Clone this repository.
-3. Run the schema tests and package the application with the commands below.
-4. For the web foundation, copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
+3. Run `mvn clean test` to verify the schema and database infrastructure.
+4. Run `mvn package` to build the WAR.
+5. For the web foundation, copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
+
+At web-application startup, the listener initializes the configured H2 schema automatically. HikariCP pooling and schema initialization are infrastructure only; application business modules will use them in later commits.
 
 ## Maven commands
 
@@ -82,4 +83,4 @@ mvn clean test
 mvn package
 ```
 
-The schema tests use isolated in-memory H2 databases and verify table creation, key relationships, uniqueness constraints, numeric checks, order status validation, quantity validation, and review rating rules. The generated WAR is written to `target/AshokMart.war` for later Tomcat or Railway deployment.
+The generated WAR is written to `target/AshokMart.war` for Tomcat 9 or later Railway deployment through GitHub.
