@@ -43,9 +43,23 @@ H2 Database
 
 The backend includes a database-backed `User` model and `UserRole` enum with `BUYER`, `SELLER`, and `ADMIN` values. `UserDaoImpl` uses prepared JDBC statements through the shared HikariCP pool. `AuthServiceImpl` validates and normalizes registration data, hashes passwords with BCrypt, rejects duplicate emails, and assigns `BUYER` to every public registration.
 
-The user-facing flow is available through `/register`, `/login`, and `/logout`. Registration and login use POST forms, validation errors are returned to the JSP views without exposing SQL details, and successful registration redirects to login with a success message. Successful login regenerates the session ID and stores only the safe `AuthenticationResult` in HTTP Session. Logout invalidates the session and redirects to the public landing page. Public registration has no role selector, and authorization filters will be added in a later commit.
+The user-facing flow is available through `/register`, `/login`, and `/logout`. Registration and login use POST forms, validation errors are returned to the JSP views without exposing SQL details, and successful registration redirects to login with a success message. Successful login regenerates the session ID and stores only the safe `AuthenticationResult` in HTTP Session. Logout invalidates the session and redirects to the public landing page. Public registration has no role selector.
 
 The JSP views are located under `src/main/webapp/WEB-INF/views/`. Shared session-aware navigation is in `includes/header.jsp`, authentication styling is in `src/main/webapp/css/auth.css`, and password confirmation uses minimal client-side JavaScript in `src/main/webapp/js/auth.js`. Server-side validation remains authoritative.
+
+## Role-based authorization
+
+Authentication establishes who is signed in; authorization determines whether that authenticated user may access a protected route. Commit 06 adds server-side `AuthenticationFilter` and `AuthorizationFilter` protection for these explicit route groups:
+
+| Route group | Required role |
+| --- | --- |
+| `/buyer/*` | `BUYER` |
+| `/seller/*` | `SELLER` |
+| `/admin/*` | `ADMIN` |
+
+There is no implicit role hierarchy. A buyer cannot access seller or admin routes, a seller cannot access admin routes, and an admin does not automatically receive buyer or seller permissions. Guests attempting to access a protected route are redirected to `/login`; authenticated users with the wrong role receive HTTP 403 and the safe `WEB-INF/views/error/403.jsp` page. The route namespaces are protected even though their business features will be implemented in later commits.
+
+Home, login, registration, authentication resources, and public CSS/JavaScript/images remain public. Navigation visibility is only a convenience; the filters are the authoritative security boundary against manually typed URLs. `SecurityHeadersFilter` adds conservative `nosniff`, frame-denial, referrer-policy, and authenticated-page cache headers. This is a focused authorization layer, not a claim of complete production security hardening.
 
 ## Database infrastructure
 
