@@ -12,5 +12,10 @@ public interface ProductService {
     ProductPage search(ProductSearchCriteria criteria);
     Optional<ProductSummary> findProduct(long productId);
     List<Product> findSellerProducts(long authenticatedSellerId, int page, int pageSize);
+    List<Product> findAllSellerProducts(long authenticatedSellerId);
+    Optional<Product> findSellerProduct(long authenticatedSellerId, long productId);
+    long createSellerProduct(long authenticatedSellerId, Product product);
+    void updateSellerProduct(long authenticatedSellerId, Product product);
+    void updateSellerProductStatus(long authenticatedSellerId, long productId, boolean active);
     boolean isOwner(Product product, long authenticatedUserId);
 }

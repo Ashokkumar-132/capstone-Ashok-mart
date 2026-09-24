@@ -9,6 +9,10 @@
                     <a href="${pageContext.request.contextPath}/cart">Cart</a>
                     <a href="${pageContext.request.contextPath}/orders">My Orders</a>
                 </c:if>
+                <c:if test="${sessionScope.authenticatedUser.role == 'SELLER'}">
+                    <a href="${pageContext.request.contextPath}/seller/dashboard">Seller Dashboard</a>
+                    <a href="${pageContext.request.contextPath}/seller/products">My Products</a>
+                </c:if>
                 <span class="account-label">Hi, ${sessionScope.authenticatedUser.name}</span>
                 <form action="${pageContext.request.contextPath}/logout" method="post" class="inline-form">
                     <button type="submit" class="nav-button">Log out</button>

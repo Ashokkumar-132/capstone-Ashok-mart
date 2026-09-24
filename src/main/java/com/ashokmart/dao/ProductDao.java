@@ -14,4 +14,9 @@ public interface ProductDao {
     List<ProductSummary> search(ProductSearchCriteria criteria) throws SQLException;
     long count(ProductSearchCriteria criteria) throws SQLException;
     List<Product> findBySellerId(long sellerId, int page, int pageSize) throws SQLException;
+    List<Product> findAllBySellerId(long sellerId) throws SQLException;
+    Optional<Product> findByIdAndSellerId(long productId, long sellerId) throws SQLException;
+    long create(Product product) throws SQLException;
+    boolean updateOwned(Product product, long sellerId) throws SQLException;
+    boolean updateStatus(long productId, long sellerId, boolean active) throws SQLException;
 }

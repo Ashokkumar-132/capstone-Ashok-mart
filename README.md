@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, transactional buyer checkout, and **Commit 11: buyer order history**. Reviews UI, seller CRUD, and administrator product management are intentionally deferred to later commits.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, transactional buyer checkout, buyer order history, and **Commit 12: seller dashboard and product CRUD**. Reviews UI and administrator product management are intentionally deferred to later commits.
 
 ## Technology stack
 
@@ -62,13 +62,21 @@ There is no implicit role hierarchy. A buyer cannot access seller or admin route
 
 Home, login, registration, authentication resources, and public CSS/JavaScript/images remain public. Navigation visibility is only a convenience; the filters are the authoritative security boundary against manually typed URLs. `SecurityHeadersFilter` adds conservative `nosniff`, frame-denial, referrer-policy, and authenticated-page cache headers. This is a focused authorization layer, not a claim of complete production security hardening.
 
+## Seller dashboard and product management
+
+Commit 12 adds the seller workspace at `/seller/dashboard` and the owned product list at `/seller/products`. The dashboard displays seller-scoped product, active-product, and out-of-stock counts with quick actions. Sellers can create products at `/seller/products/new`, edit their own products, and activate or deactivate them through POST-only mutations. Seller navigation is visible only to authenticated `SELLER` users.
+
+Seller ownership is enforced at every layer. The authenticated seller ID is derived from the session; no form or URL seller ID is trusted. DAO reads and writes use ownership-qualified SQL such as `WHERE id = ? AND seller_id = ?`, and cross-seller edits or status changes return safe not-found/error behavior without modifying the other seller's product. Server validation covers name, description, category existence, non-negative `BigDecimal` price with at most two decimal places, non-negative stock, and HTTP(S) or application-path image values.
+
+Hard deletion is intentionally not exposed because the existing foreign keys from cart items, order items, and reviews protect active and historical product references. Deactivation is the compatible lifecycle operation, so historical orders remain intact while deactivated products disappear from the buyer catalog. The seller product list uses JSTL, responsive styling, PRG redirects, success/error messages, and mobile-friendly create/edit forms.
+
 ## Product catalog backend
 
 The catalog layer includes `Category` and `Product` persistence models, `CategoryDaoImpl` and `ProductDaoImpl` JDBC implementations, and service-layer validation through `CategoryServiceImpl` and `ProductServiceImpl`. Public catalog queries return only enabled products and provide product details with category and seller names. Inactive products remain available only to future seller-owned management operations and are not exposed through public product lookup.
 
 `ProductSearchCriteria` supports case-insensitive name/description search, category filtering, minimum and maximum price, in-stock filtering, and pagination. `ProductPage` returns products together with the current page, page size, total results, and total pages. Sorting is limited to the `ProductSort` whitelist (`NEWEST`, `PRICE_ASC`, `PRICE_DESC`, `NAME_ASC`, and `NAME_DESC`); trusted SQL fragments are selected in the DAO and user input is always bound as a prepared-statement parameter. Page numbers and sizes are normalized to safe bounds, and invalid price ranges are rejected.
 
-The service provides product detail retrieval, seller-product lookup, and an ownership helper that compares the persisted product seller ID with the authenticated user ID. It does not trust a submitted seller ID and does not implement seller CRUD, stock deduction, or ratings. The schema adds focused indexes for product category, seller, enabled status, and price to support the catalog workload.
+The service provides product detail retrieval, seller-product lookup, and an ownership helper that compares the persisted product seller ID with the authenticated user ID. The same product infrastructure also powers seller CRUD, while stock deduction and ratings remain separate modules. The schema adds focused indexes for product category, seller, enabled status, and price to support the catalog workload.
 
 ## Product catalog UI
 
@@ -123,15 +131,16 @@ SLF4J with Logback records pool initialization, schema initialization, startup/s
 
 1. Install Java 17 and Maven.
 2. Clone this repository.
-3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog, cart, checkout transaction, stock rollback, order history, ownership, historical prices, and servlet flows.
+3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog, cart, checkout transaction, stock rollback, order history, seller CRUD, ownership, validation, and servlet flows.
 4. Run `mvn package` to build the WAR.
 5. Copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
 6. Open `/products` from the public landing page to browse the catalog, or open `/register` and `/login` to exercise authentication.
 7. Register/login as a buyer, open a product, add it to the cart, and use `/cart` to update, remove, or clear items.
 8. Open `/checkout`, review the server-calculated total, place the order, and verify the confirmation page and cleared cart.
 9. Open **My Orders**, open an order detail, and verify its stored prices and status.
+10. Log in as a seller, open **Seller Dashboard**, create or edit a product, and activate/deactivate it from **My Products**.
 
-At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI, buyer cart, and transactional checkout are available, while reviews, seller product CRUD, and other marketplace management modules are not yet implemented.
+At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI, buyer cart, transactional checkout, buyer order history, and seller product management are available, while reviews and other marketplace management modules are not yet implemented.
 
 ## Maven commands
 

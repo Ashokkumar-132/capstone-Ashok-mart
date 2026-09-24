@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -101,6 +102,86 @@ public final class ProductDaoImpl implements ProductDao {
                 return products;
             }
         }
+    }
+
+    @Override
+    public List<Product> findAllBySellerId(long sellerId) throws SQLException {
+        String sql = "SELECT " + PRODUCT_COLUMNS + " FROM products p WHERE p.seller_id = ? "
+                + "ORDER BY p.created_at DESC, p.id DESC";
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, sellerId);
+            try (ResultSet result = statement.executeQuery()) {
+                List<Product> products = new ArrayList<>();
+                while (result.next()) products.add(mapProduct(result));
+                return products;
+            }
+        }
+    }
+
+    @Override
+    public Optional<Product> findByIdAndSellerId(long productId, long sellerId) throws SQLException {
+        String sql = "SELECT " + PRODUCT_COLUMNS + " FROM products p WHERE p.id = ? AND p.seller_id = ?";
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, productId);
+            statement.setLong(2, sellerId);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() ? Optional.of(mapProduct(result)) : Optional.empty();
+            }
+        }
+    }
+
+    @Override
+    public long create(Product product) throws SQLException {
+        String sql = "INSERT INTO products (seller_id, category_id, name, description, price, stock_quantity, image_url, enabled) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection connection = pool.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            bindProduct(statement, product);
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (!keys.next()) throw new SQLException("Product creation did not return an ID");
+                return keys.getLong(1);
+            }
+        }
+    }
+
+    @Override
+    public boolean updateOwned(Product product, long sellerId) throws SQLException {
+        String sql = "UPDATE products SET category_id = ?, name = ?, description = ?, price = ?, stock_quantity = ?, "
+                + "image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND seller_id = ?";
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, product.getCategoryId());
+            statement.setString(2, product.getName());
+            statement.setString(3, product.getDescription());
+            statement.setBigDecimal(4, product.getPrice());
+            statement.setInt(5, product.getStockQuantity());
+            statement.setString(6, product.getImageUrl());
+            statement.setLong(7, product.getId());
+            statement.setLong(8, sellerId);
+            return statement.executeUpdate() == 1;
+        }
+    }
+
+    @Override
+    public boolean updateStatus(long productId, long sellerId, boolean active) throws SQLException {
+        String sql = "UPDATE products SET enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND seller_id = ?";
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setBoolean(1, active);
+            statement.setLong(2, productId);
+            statement.setLong(3, sellerId);
+            return statement.executeUpdate() == 1;
+        }
+    }
+
+    private void bindProduct(PreparedStatement statement, Product product) throws SQLException {
+        statement.setLong(1, product.getSellerId());
+        statement.setLong(2, product.getCategoryId());
+        statement.setString(3, product.getName());
+        statement.setString(4, product.getDescription());
+        statement.setBigDecimal(5, product.getPrice());
+        statement.setInt(6, product.getStockQuantity());
+        statement.setString(7, product.getImageUrl());
+        statement.setBoolean(8, product.isActive());
     }
 
     private String summaryFrom() {
