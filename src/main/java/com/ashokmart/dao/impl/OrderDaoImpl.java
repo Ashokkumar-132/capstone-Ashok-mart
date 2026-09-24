@@ -5,6 +5,7 @@ import com.ashokmart.model.CheckoutItem;
 import com.ashokmart.model.Order;
 import com.ashokmart.model.OrderItem;
 import com.ashokmart.model.OrderItemView;
+import com.ashokmart.model.OrderSummary;
 import com.ashokmart.util.DatabaseConnectionPool;
 
 import java.math.BigDecimal;
@@ -109,7 +110,7 @@ public final class OrderDaoImpl implements OrderDao {
 
     @Override
     public List<OrderItemView> findOrderItems(Connection connection, long buyerId, long orderId) throws SQLException {
-        String sql = "SELECT oi.product_id, p.name, oi.quantity, oi.unit_price, oi.subtotal "
+        String sql = "SELECT oi.product_id, p.name, p.image_url, oi.quantity, oi.unit_price, oi.subtotal "
                 + "FROM order_items oi JOIN products p ON p.id = oi.product_id "
                 + "JOIN orders o ON o.id = oi.order_id "
                 + "WHERE oi.order_id = ? AND o.buyer_id = ? ORDER BY oi.id";
@@ -120,11 +121,46 @@ public final class OrderDaoImpl implements OrderDao {
                 List<OrderItemView> items = new ArrayList<>();
                 while (result.next()) {
                     items.add(new OrderItemView(result.getLong("product_id"), result.getString("name"),
-                            result.getInt("quantity"), result.getBigDecimal("unit_price"),
-                            result.getBigDecimal("subtotal")));
+                            result.getString("image_url"), result.getInt("quantity"),
+                            result.getBigDecimal("unit_price"), result.getBigDecimal("subtotal")));
                 }
                 return items;
             }
+        }
+    }
+
+    @Override
+    public List<OrderSummary> findOrdersByBuyerId(long buyerId) throws SQLException {
+        String sql = "SELECT o.id, o.total_amount, o.status, o.created_at, COUNT(oi.id) AS item_count "
+                + "FROM orders o LEFT JOIN order_items oi ON oi.order_id = o.id "
+                + "WHERE o.buyer_id = ? "
+                + "GROUP BY o.id, o.total_amount, o.status, o.created_at "
+                + "ORDER BY o.created_at DESC, o.id DESC";
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, buyerId);
+            try (ResultSet result = statement.executeQuery()) {
+                List<OrderSummary> orders = new ArrayList<>();
+                while (result.next()) {
+                    orders.add(new OrderSummary(result.getLong("id"), result.getBigDecimal("total_amount"),
+                            result.getString("status"), result.getTimestamp("created_at").toLocalDateTime(),
+                            result.getLong("item_count")));
+                }
+                return orders;
+            }
+        }
+    }
+
+    @Override
+    public Optional<Order> findOrderByIdAndBuyerId(long orderId, long buyerId) throws SQLException {
+        try (Connection connection = pool.getConnection()) {
+            return findOrderByBuyerId(connection, buyerId, orderId);
+        }
+    }
+
+    @Override
+    public List<OrderItemView> findOrderItems(long orderId, long buyerId) throws SQLException {
+        try (Connection connection = pool.getConnection()) {
+            return findOrderItems(connection, buyerId, orderId);
         }
     }
 

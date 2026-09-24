@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, and **Commit 10: transactional buyer checkout**. Reviews UI, seller CRUD, and administrator product management are intentionally deferred to later commits.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, transactional buyer checkout, and **Commit 11: buyer order history**. Reviews UI, seller CRUD, and administrator product management are intentionally deferred to later commits.
 
 ## Technology stack
 
@@ -56,7 +56,7 @@ Authentication establishes who is signed in; authorization determines whether th
 | `/buyer/*` | `BUYER` |
 | `/seller/*` | `SELLER` |
 | `/admin/*` | `ADMIN` |
-| `/cart/*`, `/checkout`, `/order-confirmation` | `BUYER` |
+| `/cart/*`, `/checkout`, `/order-confirmation`, `/orders/*` | `BUYER` |
 
 There is no implicit role hierarchy. A buyer cannot access seller or admin routes, a seller cannot access admin routes, and an admin does not automatically receive buyer or seller permissions. Guests attempting to access a protected route are redirected to `/login`; authenticated users with the wrong role receive HTTP 403 and the safe `WEB-INF/views/error/403.jsp` page. The route namespaces are protected even though their business features will be implemented in later commits.
 
@@ -88,6 +88,12 @@ Commit 10 adds the buyer checkout flow at `GET /checkout` and `POST /checkout`, 
 
 Stock deduction uses `UPDATE products ... WHERE enabled = TRUE AND stock_quantity >= ?` and checks the affected-row count to prevent overselling. Any validation, stock conflict, order-item, stock, or cart-clearing failure rolls the complete transaction back, leaving no partial order and preserving the cart and stock. Order confirmation reloads the order and items through buyer-scoped DAO queries, so a buyer cannot view another user's order by changing the URL ID. Checkout uses the existing `PENDING` order status and does not implement payment, shipping, or order-management screens.
 
+## Buyer order history
+
+Commit 11 adds `GET /orders` and buyer-scoped `GET /orders/view?id=...` detail pages. `OrderDaoImpl` retrieves order summaries with item counts and retrieves order details only when the authenticated buyer ID matches the order's `buyer_id`. The service returns an empty history for buyers without orders and an empty detail result for nonexistent or another buyer's order, avoiding ownership leaks.
+
+Order details display the stored `order_items.unit_price` and `subtotal` values created during checkout rather than today's product price. Product names and available image URLs are included for presentation, while order total, status, and creation timestamp come from the persisted order. The buyer-only `My Orders` navigation link appears in the shared header, and the checkout confirmation links to order history. Both history pages include responsive empty states and continue-shopping navigation.
+
 ## Database infrastructure
 
 The structural schema remains at `src/main/resources/schema.sql` and creates `users`, `categories`, `products`, `cart`, `cart_items`, `orders`, `order_items`, and `reviews`. It includes primary keys, foreign keys, unique constraints, role/status checks, numeric checks, referential-integrity rules, and focused catalog indexes.
@@ -117,12 +123,13 @@ SLF4J with Logback records pool initialization, schema initialization, startup/s
 
 1. Install Java 17 and Maven.
 2. Clone this repository.
-3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog, cart, checkout transaction, stock rollback, totals, and servlet flows.
+3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog, cart, checkout transaction, stock rollback, order history, ownership, historical prices, and servlet flows.
 4. Run `mvn package` to build the WAR.
 5. Copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
 6. Open `/products` from the public landing page to browse the catalog, or open `/register` and `/login` to exercise authentication.
 7. Register/login as a buyer, open a product, add it to the cart, and use `/cart` to update, remove, or clear items.
 8. Open `/checkout`, review the server-calculated total, place the order, and verify the confirmation page and cleared cart.
+9. Open **My Orders**, open an order detail, and verify its stored prices and status.
 
 At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI, buyer cart, and transactional checkout are available, while reviews, seller product CRUD, and other marketplace management modules are not yet implemented.
 

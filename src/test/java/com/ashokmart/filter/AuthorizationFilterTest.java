@@ -69,6 +69,7 @@ class AuthorizationFilterTest {
         filter.doFilter(request("/buyer/account", session(buyer)), allowedResponse, chain);
         verify(chain).doFilter(any(ServletRequest.class), eq(allowedResponse));
         filter.doFilter(request("/checkout", session(buyer)), allowedResponse, chain);
+        filter.doFilter(request("/orders", session(buyer)), allowedResponse, chain);
 
         assertForbidden(filter, "/seller/products", buyer);
         assertForbidden(filter, "/admin/users", buyer);
@@ -83,6 +84,7 @@ class AuthorizationFilterTest {
         verify(chain).doFilter(any(ServletRequest.class), eq(response));
         assertForbidden(filter, "/admin/users", user(UserRole.SELLER));
         assertForbidden(filter, "/checkout", user(UserRole.SELLER));
+        assertForbidden(filter, "/orders", user(UserRole.SELLER));
     }
 
     @Test

@@ -39,6 +39,7 @@
             </section>
             <div class="confirmation-actions">
                 <a class="primary-button" href="${pageContext.request.contextPath}/products">Continue shopping</a>
+                <a class="secondary-button" href="${pageContext.request.contextPath}/orders">View my orders</a>
                 <a class="secondary-button" href="${pageContext.request.contextPath}/cart">View cart</a>
             </div>
         </c:otherwise>

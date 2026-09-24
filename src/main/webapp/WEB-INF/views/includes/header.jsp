@@ -7,6 +7,7 @@
             <c:when test="${not empty sessionScope.authenticatedUser}">
                 <c:if test="${sessionScope.authenticatedUser.role == 'BUYER'}">
                     <a href="${pageContext.request.contextPath}/cart">Cart</a>
+                    <a href="${pageContext.request.contextPath}/orders">My Orders</a>
                 </c:if>
                 <span class="account-label">Hi, ${sessionScope.authenticatedUser.name}</span>
                 <form action="${pageContext.request.contextPath}/logout" method="post" class="inline-form">
