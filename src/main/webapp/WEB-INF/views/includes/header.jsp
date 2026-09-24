@@ -14,6 +14,10 @@
                     <a href="${pageContext.request.contextPath}/seller/products">My Products</a>
                     <a href="${pageContext.request.contextPath}/seller/orders">Seller Orders</a>
                 </c:if>
+                <c:if test="${sessionScope.authenticatedUser.role == 'ADMIN'}">
+                    <a href="${pageContext.request.contextPath}/admin/dashboard">Admin Dashboard</a>
+                    <a href="${pageContext.request.contextPath}/admin/users">User Management</a>
+                </c:if>
                 <span class="account-label">Hi, ${sessionScope.authenticatedUser.name}</span>
                 <form action="${pageContext.request.contextPath}/logout" method="post" class="inline-form">
                     <button type="submit" class="nav-button">Log out</button>

@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, transactional buyer checkout, buyer order history, seller dashboard/product CRUD, and **Commit 13: seller order management and status**. Reviews UI and administrator product management are intentionally deferred to later commits.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, transactional buyer checkout, buyer order history, seller dashboard/product CRUD, seller order management/status, and **Commit 14: admin dashboard and user management**. Reviews UI and other marketplace management modules are intentionally deferred to later commits.
 
 ## Technology stack
 
@@ -58,7 +58,7 @@ Authentication establishes who is signed in; authorization determines whether th
 | `/admin/*` | `ADMIN` |
 | `/cart/*`, `/checkout`, `/order-confirmation`, `/orders/*` | `BUYER` |
 
-There is no implicit role hierarchy. A buyer cannot access seller or admin routes, a seller cannot access admin routes, and an admin does not automatically receive buyer or seller permissions. Guests attempting to access a protected route are redirected to `/login`; authenticated users with the wrong role receive HTTP 403 and the safe `WEB-INF/views/error/403.jsp` page. The route namespaces are protected even though their business features will be implemented in later commits.
+There is no implicit role hierarchy. A buyer cannot access seller or admin routes, a seller cannot access admin routes, and an admin does not automatically receive buyer or seller permissions. Guests attempting to access a protected route are redirected to `/login`; authenticated users with the wrong role receive HTTP 403 and the safe `WEB-INF/views/error/403.jsp` page. Route namespaces remain protected as the marketplace features are implemented progressively.
 
 Home, login, registration, authentication resources, and public CSS/JavaScript/images remain public. Navigation visibility is only a convenience; the filters are the authoritative security boundary against manually typed URLs. `SecurityHeadersFilter` adds conservative `nosniff`, frame-denial, referrer-policy, and authenticated-page cache headers. This is a focused authorization layer, not a claim of complete production security hardening.
 
@@ -69,6 +69,14 @@ Commit 12 adds the seller workspace at `/seller/dashboard` and the owned product
 Seller ownership is enforced at every layer. The authenticated seller ID is derived from the session; no form or URL seller ID is trusted. DAO reads and writes use ownership-qualified SQL such as `WHERE id = ? AND seller_id = ?`, and cross-seller edits or status changes return safe not-found/error behavior without modifying the other seller's product. Server validation covers name, description, category existence, non-negative `BigDecimal` price with at most two decimal places, non-negative stock, and HTTP(S) or application-path image values.
 
 Hard deletion is intentionally not exposed because the existing foreign keys from cart items, order items, and reviews protect active and historical product references. Deactivation is the compatible lifecycle operation, so historical orders remain intact while deactivated products disappear from the buyer catalog. The seller product list uses JSTL, responsive styling, PRG redirects, success/error messages, and mobile-friendly create/edit forms.
+
+## Admin dashboard and user management
+
+Commit 14 adds the admin workspace at `/admin/dashboard` and database-backed user management at `/admin/users`. The dashboard reports real total, buyer, seller, administrator, active, and inactive account counts from the existing `users` table. User management supports prepared-statement search by name/email, role and active-status filters, pagination, registration timestamps, and safe activate/deactivate POST actions.
+
+Admin routes are protected by the existing `AuthorizationFilter` and require `ADMIN`. The admin service verifies the authenticated administrator against the database before every operation, while the UI receives only `AdminUserView` projections containing name, email, role, enabled status, and registration time. Password hashes, authentication tokens, session identifiers, and password fields are never exposed or accepted by the management endpoints. Roles remain constrained to `BUYER`, `SELLER`, and `ADMIN`; no promotion or password-reset workflow is introduced.
+
+Account deactivation preserves users and their historical relationships. Existing login behavior already rejects disabled accounts. The current admin cannot deactivate their own account, and the service prevents deactivation of the final active administrator. Redundant activate/deactivate requests are rejected with a safe message, and all mutations use POST plus PRG redirects.
 
 ## Seller order management
 
@@ -137,7 +145,7 @@ SLF4J with Logback records pool initialization, schema initialization, startup/s
 
 1. Install Java 17 and Maven.
 2. Clone this repository.
-3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog, cart, checkout transaction, stock rollback, order history, seller CRUD, seller order isolation, status transitions, ownership, validation, and servlet flows.
+3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog, cart, checkout transaction, stock rollback, order history, seller CRUD, seller order isolation, admin filters, protected-account safeguards, status transitions, ownership, validation, and servlet flows.
 4. Run `mvn package` to build the WAR.
 5. Copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
 6. Open `/products` from the public landing page to browse the catalog, or open `/register` and `/login` to exercise authentication.
@@ -146,8 +154,9 @@ SLF4J with Logback records pool initialization, schema initialization, startup/s
 9. Open **My Orders**, open an order detail, and verify its stored prices and status.
 10. Log in as a seller, open **Seller Dashboard**, create or edit a product, and activate/deactivate it from **My Products**.
 11. Open **Seller Orders**, verify only owned items and seller subtotal are shown, then advance a relevant order through a valid status transition.
+12. Log in as an admin, open **Admin Dashboard**, then search/filter users and activate/deactivate a test buyer or seller account from **User Management**.
 
-At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI, buyer cart, transactional checkout, buyer order history, seller product management, and seller order management are available, while reviews and other marketplace management modules are not yet implemented.
+At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI, buyer cart, transactional checkout, buyer order history, seller product management, seller order management, and admin user management are available, while reviews and other marketplace management modules are not yet implemented.
 
 ## Maven commands
 

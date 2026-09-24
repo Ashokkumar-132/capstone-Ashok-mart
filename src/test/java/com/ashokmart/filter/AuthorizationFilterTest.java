@@ -102,6 +102,17 @@ class AuthorizationFilterTest {
     }
 
     @Test
+    void adminCanAccessDashboardAndOtherRolesCannot() throws Exception {
+        AuthorizationFilter filter = new AuthorizationFilter();
+        FilterChain chain = mock(FilterChain.class);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        filter.doFilter(request("/admin/dashboard", session(user(UserRole.ADMIN))), response, chain);
+        verify(chain).doFilter(any(ServletRequest.class), eq(response));
+        assertForbidden(filter, "/admin/dashboard", user(UserRole.BUYER));
+        assertForbidden(filter, "/admin/dashboard", user(UserRole.SELLER));
+    }
+
+    @Test
     void onlyBuyersCanAccessCartRoutes() throws Exception {
         AuthorizationFilter filter = new AuthorizationFilter();
         FilterChain chain = mock(FilterChain.class);
