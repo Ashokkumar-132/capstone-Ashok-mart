@@ -3,7 +3,7 @@
 .seller-hero h1, .seller-page-heading h1 { margin-bottom: .8rem; }
 .seller-hero .lede, .seller-page-heading .lede { margin: 0; }
 .seller-hero-action { max-width: 170px; text-align: center; }
-.seller-stat-grid { display: grid; gap: 1rem; grid-template-columns: repeat(3, 1fr); margin-bottom: 1.5rem; }
+.seller-stat-grid { display: grid; gap: 1rem; grid-template-columns: repeat(4, 1fr); margin-bottom: 1.5rem; }
 .seller-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.3rem; }
 .seller-stat span { color: var(--muted); display: block; font-size: .76rem; letter-spacing: .07em; text-transform: uppercase; }
 .seller-stat strong { display: block; font-family: "Space Mono", monospace; font-size: 2rem; margin-top: .65rem; }
@@ -52,7 +52,7 @@
     .seller-layout { padding-left: 1rem; padding-right: 1rem; }
     .seller-hero, .seller-page-heading { align-items: flex-start; flex-direction: column; gap: 1rem; }
     .seller-hero-action { max-width: none; width: 100%; }
-    .seller-stat-grid { grid-template-columns: 1fr; }
+    .seller-stat-grid { grid-template-columns: repeat(2, 1fr); }
     .seller-panel-heading { align-items: flex-start; flex-direction: column; gap: .7rem; }
     .seller-preview-row { grid-template-columns: 48px minmax(0, 1fr) auto; }
     .seller-preview-row .text-button { grid-column: 2; justify-self: start; }

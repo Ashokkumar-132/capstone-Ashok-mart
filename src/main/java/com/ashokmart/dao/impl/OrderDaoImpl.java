@@ -6,6 +6,7 @@ import com.ashokmart.model.Order;
 import com.ashokmart.model.OrderItem;
 import com.ashokmart.model.OrderItemView;
 import com.ashokmart.model.OrderSummary;
+import com.ashokmart.model.SellerOrderSummary;
 import com.ashokmart.util.DatabaseConnectionPool;
 
 import java.math.BigDecimal;
@@ -161,6 +162,78 @@ public final class OrderDaoImpl implements OrderDao {
     public List<OrderItemView> findOrderItems(long orderId, long buyerId) throws SQLException {
         try (Connection connection = pool.getConnection()) {
             return findOrderItems(connection, buyerId, orderId);
+        }
+    }
+
+    @Override
+    public List<SellerOrderSummary> findOrdersForSeller(long sellerId) throws SQLException {
+        String sql = "SELECT o.id, SUM(oi.subtotal) AS seller_subtotal, o.status, o.created_at, COUNT(oi.id) AS item_count "
+                + "FROM orders o JOIN order_items oi ON oi.order_id = o.id "
+                + "JOIN products p ON p.id = oi.product_id "
+                + "WHERE oi.seller_id = ? AND p.seller_id = ? "
+                + "GROUP BY o.id, o.status, o.created_at ORDER BY o.created_at DESC, o.id DESC";
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, sellerId);
+            statement.setLong(2, sellerId);
+            try (ResultSet result = statement.executeQuery()) {
+                List<SellerOrderSummary> orders = new ArrayList<>();
+                while (result.next()) {
+                    orders.add(new SellerOrderSummary(result.getLong("id"), result.getBigDecimal("seller_subtotal"),
+                            result.getString("status"), result.getTimestamp("created_at").toLocalDateTime(),
+                            result.getLong("item_count")));
+                }
+                return orders;
+            }
+        }
+    }
+
+    @Override
+    public Optional<Order> findOrderForSeller(long orderId, long sellerId) throws SQLException {
+        String sql = "SELECT DISTINCT o.id, o.buyer_id, o.total_amount, o.status, o.created_at FROM orders o "
+                + "JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id "
+                + "WHERE o.id = ? AND oi.seller_id = ? AND p.seller_id = ?";
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, orderId);
+            statement.setLong(2, sellerId);
+            statement.setLong(3, sellerId);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() ? Optional.of(mapOrder(result)) : Optional.empty();
+            }
+        }
+    }
+
+    @Override
+    public List<OrderItemView> findSellerOrderItems(long orderId, long sellerId) throws SQLException {
+        String sql = "SELECT oi.product_id, p.name, p.image_url, oi.quantity, oi.unit_price, oi.subtotal "
+                + "FROM order_items oi JOIN products p ON p.id = oi.product_id "
+                + "WHERE oi.order_id = ? AND oi.seller_id = ? AND p.seller_id = ? ORDER BY oi.id";
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, orderId);
+            statement.setLong(2, sellerId);
+            statement.setLong(3, sellerId);
+            try (ResultSet result = statement.executeQuery()) {
+                List<OrderItemView> items = new ArrayList<>();
+                while (result.next()) {
+                    items.add(new OrderItemView(result.getLong("product_id"), result.getString("name"),
+                            result.getString("image_url"), result.getInt("quantity"),
+                            result.getBigDecimal("unit_price"), result.getBigDecimal("subtotal")));
+                }
+                return items;
+            }
+        }
+    }
+
+    @Override
+    public boolean updateSellerOrderStatus(long orderId, long sellerId, String status) throws SQLException {
+        String sql = "UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? "
+                + "AND EXISTS (SELECT 1 FROM order_items oi JOIN products p ON p.id = oi.product_id "
+                + "WHERE oi.order_id = orders.id AND oi.seller_id = ? AND p.seller_id = ?)";
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, status);
+            statement.setLong(2, orderId);
+            statement.setLong(3, sellerId);
+            statement.setLong(4, sellerId);
+            return statement.executeUpdate() == 1;
         }
     }
 

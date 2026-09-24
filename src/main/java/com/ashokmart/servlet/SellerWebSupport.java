@@ -2,12 +2,15 @@ package com.ashokmart.servlet;
 
 import com.ashokmart.dao.impl.CategoryDaoImpl;
 import com.ashokmart.dao.impl.ProductDaoImpl;
+import com.ashokmart.dao.impl.OrderDaoImpl;
 import com.ashokmart.model.AuthenticationResult;
 import com.ashokmart.model.UserRole;
 import com.ashokmart.service.CategoryService;
 import com.ashokmart.service.ProductService;
+import com.ashokmart.service.SellerOrderService;
 import com.ashokmart.service.impl.CategoryServiceImpl;
 import com.ashokmart.service.impl.ProductServiceImpl;
+import com.ashokmart.service.impl.SellerOrderServiceImpl;
 import com.ashokmart.util.DatabaseConnectionPool;
 
 import javax.servlet.ServletContext;
@@ -49,5 +52,9 @@ final class SellerWebSupport {
 
     static CategoryService categoryService(DatabaseConnectionPool pool) {
         return new CategoryServiceImpl(new CategoryDaoImpl(pool));
+    }
+
+    static SellerOrderService sellerOrderService(DatabaseConnectionPool pool) {
+        return new SellerOrderServiceImpl(new OrderDaoImpl(pool));
     }
 }

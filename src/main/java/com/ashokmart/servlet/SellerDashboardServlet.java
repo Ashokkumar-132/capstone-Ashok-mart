@@ -30,6 +30,8 @@ public final class SellerDashboardServlet extends HttpServlet {
             request.setAttribute("productCount", products.size());
             request.setAttribute("activeProductCount", products.stream().filter(Product::isActive).count());
             request.setAttribute("outOfStockCount", products.stream().filter(product -> product.getStockQuantity() == 0).count());
+            request.setAttribute("relevantOrderCount", SellerWebSupport.sellerOrderService(SellerWebSupport.pool(getServletContext()))
+                    .getOrdersForSeller(seller.userId()).size());
             request.getRequestDispatcher("/WEB-INF/views/seller-dashboard.jsp").forward(request, response);
         } catch (IllegalStateException exception) {
             LOGGER.error("Seller dashboard request failed", exception);

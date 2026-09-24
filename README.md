@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, transactional buyer checkout, buyer order history, and **Commit 12: seller dashboard and product CRUD**. Reviews UI and administrator product management are intentionally deferred to later commits.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, transactional buyer checkout, buyer order history, seller dashboard/product CRUD, and **Commit 13: seller order management and status**. Reviews UI and administrator product management are intentionally deferred to later commits.
 
 ## Technology stack
 
@@ -70,6 +70,12 @@ Seller ownership is enforced at every layer. The authenticated seller ID is deri
 
 Hard deletion is intentionally not exposed because the existing foreign keys from cart items, order items, and reviews protect active and historical product references. Deactivation is the compatible lifecycle operation, so historical orders remain intact while deactivated products disappear from the buyer catalog. The seller product list uses JSTL, responsive styling, PRG redirects, success/error messages, and mobile-friendly create/edit forms.
 
+## Seller order management
+
+Commit 13 adds seller-scoped order management at `GET /seller/orders`, seller-owned detail views at `GET /seller/orders/view?id=...`, and POST-only status updates at `/seller/orders/status`. DAO queries join `orders`, `order_items`, and `products` and verify both the persisted order-item seller and product seller against the authenticated session seller. A seller sees only orders containing that seller's products, only that seller's line items, and a seller-specific subtotal calculated from stored historical `order_items.subtotal` values.
+
+The existing schema stores fulfillment status only on `orders`, not on `order_items`. Accordingly, status updates are permitted only when the seller owns at least one item in the order, but the resulting shared status is visible to the buyer for the full order. The service uses conservative transitions: `PENDING → CONFIRMED/CANCELLED`, `CONFIRMED → PROCESSING/CANCELLED`, `PROCESSING → SHIPPED/CANCELLED`, and `SHIPPED → DELIVERED`; delivered and cancelled orders are terminal. This limitation is displayed in the seller detail view rather than presenting a false claim of independent per-seller fulfillment.
+
 ## Product catalog backend
 
 The catalog layer includes `Category` and `Product` persistence models, `CategoryDaoImpl` and `ProductDaoImpl` JDBC implementations, and service-layer validation through `CategoryServiceImpl` and `ProductServiceImpl`. Public catalog queries return only enabled products and provide product details with category and seller names. Inactive products remain available only to future seller-owned management operations and are not exposed through public product lookup.
@@ -131,7 +137,7 @@ SLF4J with Logback records pool initialization, schema initialization, startup/s
 
 1. Install Java 17 and Maven.
 2. Clone this repository.
-3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog, cart, checkout transaction, stock rollback, order history, seller CRUD, ownership, validation, and servlet flows.
+3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog, cart, checkout transaction, stock rollback, order history, seller CRUD, seller order isolation, status transitions, ownership, validation, and servlet flows.
 4. Run `mvn package` to build the WAR.
 5. Copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
 6. Open `/products` from the public landing page to browse the catalog, or open `/register` and `/login` to exercise authentication.
@@ -139,8 +145,9 @@ SLF4J with Logback records pool initialization, schema initialization, startup/s
 8. Open `/checkout`, review the server-calculated total, place the order, and verify the confirmation page and cleared cart.
 9. Open **My Orders**, open an order detail, and verify its stored prices and status.
 10. Log in as a seller, open **Seller Dashboard**, create or edit a product, and activate/deactivate it from **My Products**.
+11. Open **Seller Orders**, verify only owned items and seller subtotal are shown, then advance a relevant order through a valid status transition.
 
-At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI, buyer cart, transactional checkout, buyer order history, and seller product management are available, while reviews and other marketplace management modules are not yet implemented.
+At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI, buyer cart, transactional checkout, buyer order history, seller product management, and seller order management are available, while reviews and other marketplace management modules are not yet implemented.
 
 ## Maven commands
 

@@ -5,6 +5,7 @@ import com.ashokmart.model.Order;
 import com.ashokmart.model.OrderItem;
 import com.ashokmart.model.OrderItemView;
 import com.ashokmart.model.OrderSummary;
+import com.ashokmart.model.SellerOrderSummary;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -23,4 +24,8 @@ public interface OrderDao {
     List<OrderSummary> findOrdersByBuyerId(long buyerId) throws SQLException;
     Optional<Order> findOrderByIdAndBuyerId(long orderId, long buyerId) throws SQLException;
     List<OrderItemView> findOrderItems(long orderId, long buyerId) throws SQLException;
+    List<SellerOrderSummary> findOrdersForSeller(long sellerId) throws SQLException;
+    Optional<Order> findOrderForSeller(long orderId, long sellerId) throws SQLException;
+    List<OrderItemView> findSellerOrderItems(long orderId, long sellerId) throws SQLException;
+    boolean updateSellerOrderStatus(long orderId, long sellerId, String status) throws SQLException;
 }

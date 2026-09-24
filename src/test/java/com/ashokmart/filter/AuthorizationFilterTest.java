@@ -17,6 +17,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -72,6 +73,7 @@ class AuthorizationFilterTest {
         filter.doFilter(request("/orders", session(buyer)), allowedResponse, chain);
 
         assertForbidden(filter, "/seller/products", buyer);
+        assertForbidden(filter, "/seller/orders", buyer);
         assertForbidden(filter, "/admin/users", buyer);
     }
 
@@ -81,7 +83,8 @@ class AuthorizationFilterTest {
         FilterChain chain = mock(FilterChain.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
         filter.doFilter(request("/seller/products", session(user(UserRole.SELLER))), response, chain);
-        verify(chain).doFilter(any(ServletRequest.class), eq(response));
+        filter.doFilter(request("/seller/orders", session(user(UserRole.SELLER))), response, chain);
+        verify(chain, times(2)).doFilter(any(ServletRequest.class), eq(response));
         assertForbidden(filter, "/admin/users", user(UserRole.SELLER));
         assertForbidden(filter, "/checkout", user(UserRole.SELLER));
         assertForbidden(filter, "/orders", user(UserRole.SELLER));

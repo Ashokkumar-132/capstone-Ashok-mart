@@ -12,6 +12,7 @@
                 <c:if test="${sessionScope.authenticatedUser.role == 'SELLER'}">
                     <a href="${pageContext.request.contextPath}/seller/dashboard">Seller Dashboard</a>
                     <a href="${pageContext.request.contextPath}/seller/products">My Products</a>
+                    <a href="${pageContext.request.contextPath}/seller/orders">Seller Orders</a>
                 </c:if>
                 <span class="account-label">Hi, ${sessionScope.authenticatedUser.name}</span>
                 <form action="${pageContext.request.contextPath}/logout" method="post" class="inline-form">
