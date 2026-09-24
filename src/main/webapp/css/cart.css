@@ -24,6 +24,7 @@
 .summary-row { color: var(--muted); display: flex; font-size: .88rem; justify-content: space-between; padding: .7rem 0; }
 .total-row { border-top: 1px solid var(--border); color: var(--text); font-size: 1rem; margin: .6rem 0 1.1rem; padding-top: 1rem; }
 .cart-summary .primary-button { margin-bottom: .75rem; }
+.checkout-link { display: block; text-align: center; }
 .clear-cart-button { background: none; border: 0; color: var(--muted); cursor: pointer; display: block; font: inherit; font-size: .82rem; margin: 0 auto; text-decoration: underline; }
 .clear-cart-button:hover { color: var(--error); }
 .summary-note { color: var(--muted); font-size: .72rem; line-height: 1.5; margin: 1.2rem 0 0; text-align: center; }

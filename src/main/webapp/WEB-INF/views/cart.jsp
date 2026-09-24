@@ -76,7 +76,7 @@
                     <h2 id="summary-heading">Order summary</h2>
                     <div class="summary-row"><span>Items</span><span>${cart.itemCount}</span></div>
                     <div class="summary-row total-row"><strong>Subtotal</strong><strong><fmt:formatNumber value="${cart.subtotal}" type="currency" currencyCode="USD" /></strong></div>
-                    <button class="primary-button" type="button" disabled title="Checkout is coming in a later release">Proceed to checkout</button>
+                    <a class="primary-button checkout-link" href="${pageContext.request.contextPath}/checkout">Proceed to checkout</a>
                     <form action="${pageContext.request.contextPath}/cart/clear" method="post">
                         <button class="clear-cart-button" type="submit">Clear cart</button>
                     </form>

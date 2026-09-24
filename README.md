@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, and **Commit 09: the buyer cart module**. Checkout, reviews UI, seller CRUD, and administrator product management are intentionally deferred to later commits.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, and **Commit 10: transactional buyer checkout**. Reviews UI, seller CRUD, and administrator product management are intentionally deferred to later commits.
 
 ## Technology stack
 
@@ -56,6 +56,7 @@ Authentication establishes who is signed in; authorization determines whether th
 | `/buyer/*` | `BUYER` |
 | `/seller/*` | `SELLER` |
 | `/admin/*` | `ADMIN` |
+| `/cart/*`, `/checkout`, `/order-confirmation` | `BUYER` |
 
 There is no implicit role hierarchy. A buyer cannot access seller or admin routes, a seller cannot access admin routes, and an admin does not automatically receive buyer or seller permissions. Guests attempting to access a protected route are redirected to `/login`; authenticated users with the wrong role receive HTTP 403 and the safe `WEB-INF/views/error/403.jsp` page. The route namespaces are protected even though their business features will be implemented in later commits.
 
@@ -67,7 +68,7 @@ The catalog layer includes `Category` and `Product` persistence models, `Categor
 
 `ProductSearchCriteria` supports case-insensitive name/description search, category filtering, minimum and maximum price, in-stock filtering, and pagination. `ProductPage` returns products together with the current page, page size, total results, and total pages. Sorting is limited to the `ProductSort` whitelist (`NEWEST`, `PRICE_ASC`, `PRICE_DESC`, `NAME_ASC`, and `NAME_DESC`); trusted SQL fragments are selected in the DAO and user input is always bound as a prepared-statement parameter. Page numbers and sizes are normalized to safe bounds, and invalid price ranges are rejected.
 
-The service provides product detail retrieval, seller-product lookup, and an ownership helper that compares the persisted product seller ID with the authenticated user ID. It does not trust a submitted seller ID and does not implement seller CRUD, stock deduction, ratings, or checkout. The schema adds focused indexes for product category, seller, enabled status, and price to support the catalog workload.
+The service provides product detail retrieval, seller-product lookup, and an ownership helper that compares the persisted product seller ID with the authenticated user ID. It does not trust a submitted seller ID and does not implement seller CRUD, stock deduction, or ratings. The schema adds focused indexes for product category, seller, enabled status, and price to support the catalog workload.
 
 ## Product catalog UI
 
@@ -79,7 +80,13 @@ The customer-facing catalog is available at `GET /products`, with query paramete
 
 Commit 09 adds the database-backed buyer cart at `GET /cart`. State-changing operations use POST and redirect back to the cart with a flash message: `/cart/add`, `/cart/update`, `/cart/remove`, and `/cart/clear`. `CartDaoImpl` uses prepared statements against the existing `cart` and `cart_items` tables, prevents duplicate cart rows per user, and joins current product values for cart display.
 
-`CartServiceImpl` derives the user ID from the authenticated session at the servlet boundary and never accepts a browser-supplied user ID. It validates active products, positive quantities, stock limits, and authenticated ownership. Prices, line totals, item counts, and subtotal are recalculated with `BigDecimal` from current database prices on every cart read. Buyer-only authentication and authorization filters protect `/cart` and all cart mutation routes. Checkout remains a disabled future action and is not implemented in this commit.
+`CartServiceImpl` derives the user ID from the authenticated session at the servlet boundary and never accepts a browser-supplied user ID. It validates active products, positive quantities, stock limits, and authenticated ownership. Prices, line totals, item counts, and subtotal are recalculated with `BigDecimal` from current database prices on every cart read. Buyer-only authentication and authorization filters protect `/cart` and all cart mutation routes.
+
+## Checkout and order transaction
+
+Commit 10 adds the buyer checkout flow at `GET /checkout` and `POST /checkout`, followed by the database-backed confirmation route `GET /order-confirmation?id=...`. The checkout review shows the server-loaded cart values, while the POST request submits no authoritative price or total. The service re-reads the cart and current product rows inside one pooled JDBC transaction, validates active products and stock, calculates totals with `BigDecimal`, creates the order and order items, conditionally deducts stock, clears the cart, and commits only when every operation succeeds.
+
+Stock deduction uses `UPDATE products ... WHERE enabled = TRUE AND stock_quantity >= ?` and checks the affected-row count to prevent overselling. Any validation, stock conflict, order-item, stock, or cart-clearing failure rolls the complete transaction back, leaving no partial order and preserving the cart and stock. Order confirmation reloads the order and items through buyer-scoped DAO queries, so a buyer cannot view another user's order by changing the URL ID. Checkout uses the existing `PENDING` order status and does not implement payment, shipping, or order-management screens.
 
 ## Database infrastructure
 
@@ -110,13 +117,14 @@ SLF4J with Logback records pool initialization, schema initialization, startup/s
 
 1. Install Java 17 and Maven.
 2. Clone this repository.
-3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog, cart DAO/service behavior, cart mutations, totals, stock validation, and servlet flows.
+3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog, cart, checkout transaction, stock rollback, totals, and servlet flows.
 4. Run `mvn package` to build the WAR.
 5. Copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
 6. Open `/products` from the public landing page to browse the catalog, or open `/register` and `/login` to exercise authentication.
 7. Register/login as a buyer, open a product, add it to the cart, and use `/cart` to update, remove, or clear items.
+8. Open `/checkout`, review the server-calculated total, place the order, and verify the confirmation page and cleared cart.
 
-At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI and buyer cart are available, while checkout, reviews, seller product CRUD, and other marketplace transaction modules are not yet implemented.
+At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI, buyer cart, and transactional checkout are available, while reviews, seller product CRUD, and other marketplace management modules are not yet implemented.
 
 ## Maven commands
 

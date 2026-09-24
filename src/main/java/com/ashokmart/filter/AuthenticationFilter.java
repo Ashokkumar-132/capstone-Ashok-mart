@@ -16,7 +16,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 /** Redirects guests away from the protected buyer, seller, and admin namespaces. */
-@WebFilter(filterName = "AuthenticationFilter", urlPatterns = {"/buyer/*", "/seller/*", "/admin/*", "/cart/*"})
+@WebFilter(filterName = "AuthenticationFilter", urlPatterns = {"/buyer/*", "/seller/*", "/admin/*", "/cart/*", "/checkout", "/order-confirmation"})
 public final class AuthenticationFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) {
@@ -47,6 +47,8 @@ public final class AuthenticationFilter implements Filter {
         return path.equals("/buyer") || path.startsWith("/buyer/")
                 || path.equals("/seller") || path.startsWith("/seller/")
                 || path.equals("/admin") || path.startsWith("/admin/")
-                || path.equals("/cart") || path.startsWith("/cart/");
+                || path.equals("/cart") || path.startsWith("/cart/")
+                || path.equals("/checkout") || path.startsWith("/checkout/")
+                || path.equals("/order-confirmation") || path.startsWith("/order-confirmation/");
     }
 }

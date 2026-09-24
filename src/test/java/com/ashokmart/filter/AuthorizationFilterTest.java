@@ -68,6 +68,7 @@ class AuthorizationFilterTest {
         HttpServletResponse allowedResponse = mock(HttpServletResponse.class);
         filter.doFilter(request("/buyer/account", session(buyer)), allowedResponse, chain);
         verify(chain).doFilter(any(ServletRequest.class), eq(allowedResponse));
+        filter.doFilter(request("/checkout", session(buyer)), allowedResponse, chain);
 
         assertForbidden(filter, "/seller/products", buyer);
         assertForbidden(filter, "/admin/users", buyer);
@@ -81,6 +82,7 @@ class AuthorizationFilterTest {
         filter.doFilter(request("/seller/products", session(user(UserRole.SELLER))), response, chain);
         verify(chain).doFilter(any(ServletRequest.class), eq(response));
         assertForbidden(filter, "/admin/users", user(UserRole.SELLER));
+        assertForbidden(filter, "/checkout", user(UserRole.SELLER));
     }
 
     @Test

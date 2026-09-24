@@ -17,7 +17,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 /** Enforces explicit, non-hierarchical role rules for protected URL namespaces. */
-@WebFilter(filterName = "AuthorizationFilter", urlPatterns = {"/buyer/*", "/seller/*", "/admin/*", "/cart/*"})
+@WebFilter(filterName = "AuthorizationFilter", urlPatterns = {"/buyer/*", "/seller/*", "/admin/*", "/cart/*", "/checkout", "/order-confirmation"})
 public final class AuthorizationFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) {
@@ -65,6 +65,10 @@ public final class AuthorizationFilter implements Filter {
             return UserRole.ADMIN;
         }
         if (path.equals("/cart") || path.startsWith("/cart/")) {
+            return UserRole.BUYER;
+        }
+        if (path.equals("/checkout") || path.startsWith("/checkout/")
+                || path.equals("/order-confirmation") || path.startsWith("/order-confirmation/")) {
             return UserRole.BUYER;
         }
         return null;
