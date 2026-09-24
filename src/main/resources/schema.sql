@@ -98,3 +98,8 @@ CREATE TABLE reviews (
     CONSTRAINT fk_reviews_product FOREIGN KEY (product_id) REFERENCES products(id),
     CONSTRAINT fk_reviews_buyer FOREIGN KEY (buyer_id) REFERENCES users(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_seller ON products(seller_id);
+CREATE INDEX IF NOT EXISTS idx_products_enabled ON products(enabled);
+CREATE INDEX IF NOT EXISTS idx_products_price ON products(price);

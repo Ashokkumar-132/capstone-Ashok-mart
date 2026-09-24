@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication backend, and **Commit 05: the authentication UI and complete authentication flow**. Authorization filters, product catalog, cart operations, checkout, reviews UI, and seller or administrator dashboards are intentionally deferred to later commits.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, and **Commit 07: the product catalog backend**. The catalog JSP UI, cart operations, checkout, reviews UI, seller CRUD, and administrator product management are intentionally deferred to later commits.
 
 ## Technology stack
 
@@ -61,9 +61,17 @@ There is no implicit role hierarchy. A buyer cannot access seller or admin route
 
 Home, login, registration, authentication resources, and public CSS/JavaScript/images remain public. Navigation visibility is only a convenience; the filters are the authoritative security boundary against manually typed URLs. `SecurityHeadersFilter` adds conservative `nosniff`, frame-denial, referrer-policy, and authenticated-page cache headers. This is a focused authorization layer, not a claim of complete production security hardening.
 
+## Product catalog backend
+
+The catalog layer includes `Category` and `Product` persistence models, `CategoryDaoImpl` and `ProductDaoImpl` JDBC implementations, and service-layer validation through `CategoryServiceImpl` and `ProductServiceImpl`. Public catalog queries return only enabled products and provide product details with category and seller names. Inactive products remain available only to future seller-owned management operations and are not exposed through public product lookup.
+
+`ProductSearchCriteria` supports case-insensitive name/description search, category filtering, minimum and maximum price, in-stock filtering, and pagination. `ProductPage` returns products together with the current page, page size, total results, and total pages. Sorting is limited to the `ProductSort` whitelist (`NEWEST`, `PRICE_ASC`, `PRICE_DESC`, `NAME_ASC`, and `NAME_DESC`); trusted SQL fragments are selected in the DAO and user input is always bound as a prepared-statement parameter. Page numbers and sizes are normalized to safe bounds, and invalid price ranges are rejected.
+
+The service provides product detail retrieval, seller-product lookup, and an ownership helper that compares the persisted product seller ID with the authenticated user ID. It does not trust a submitted seller ID and does not implement seller CRUD, stock deduction, ratings, cart, or checkout. The schema adds focused indexes for product category, seller, enabled status, and price to support the catalog workload.
+
 ## Database infrastructure
 
-The structural schema remains at `src/main/resources/schema.sql` and creates `users`, `categories`, `products`, `cart`, `cart_items`, `orders`, `order_items`, and `reviews`. It includes primary keys, foreign keys, unique constraints, role/status checks, numeric checks, and referential-integrity rules.
+The structural schema remains at `src/main/resources/schema.sql` and creates `users`, `categories`, `products`, `cart`, `cart_items`, `orders`, `order_items`, and `reviews`. It includes primary keys, foreign keys, unique constraints, role/status checks, numeric checks, referential-integrity rules, and focused catalog indexes.
 
 `DatabaseConnectionPool` owns one application-wide HikariCP datasource. Future DAOs use `pool.getConnection()` in try-with-resources; closing that connection returns it to HikariCP. `DatabaseInitializer` reads the existing `schema.sql` resource and executes it through the datasource. `DatabaseContextListener` creates the pool and initializes the schema once during application startup, then closes the pool during shutdown.
 
@@ -90,12 +98,12 @@ SLF4J with Logback records pool initialization, schema initialization, startup/s
 
 1. Install Java 17 and Maven.
 2. Clone this repository.
-3. Run `mvn clean test` to verify the schema, infrastructure, DAO, password, registration, login, and existing authentication behavior.
+3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog DAO/service behavior, search, filters, sorting, pagination, and ownership checks.
 4. Run `mvn package` to build the WAR.
 5. Copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
 6. Open `/register` or `/login` from the public landing page to exercise the authentication flow.
 
-At web-application startup, the listener initializes the configured H2 schema automatically. Product and other marketplace modules are not yet implemented.
+At web-application startup, the listener initializes the configured H2 schema automatically. The catalog backend is ready for a later JSP UI, while seller product CRUD and other marketplace transaction modules are not yet implemented.
 
 ## Maven commands
 
