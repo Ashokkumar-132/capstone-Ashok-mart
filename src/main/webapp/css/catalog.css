@@ -72,6 +72,12 @@ select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(15, 118, 
 .detail-rating { margin-bottom: 1.25rem; }
 .add-cart-disabled { cursor: not-allowed; opacity: .55; }
 .add-cart-disabled span { font-size: .76rem; font-weight: 500; }
+.detail-cart-form label { color: var(--muted); font-size: .78rem; margin-bottom: .45rem; }
+.detail-cart-actions { align-items: center; display: flex; gap: .75rem; }
+.detail-cart-actions input { max-width: 92px; }
+.detail-cart-actions .primary-button { flex: 1; }
+.login-to-cart { display: block; text-align: center; }
+.out-of-stock-note { background: #fff7ed; border-radius: 8px; color: var(--warning); font-size: .86rem; padding: .75rem .85rem; }
 .detail-empty { margin-top: 3rem; }
 
 @media (max-width: 900px) {

@@ -95,6 +95,16 @@ class AuthorizationFilterTest {
     }
 
     @Test
+    void onlyBuyersCanAccessCartRoutes() throws Exception {
+        AuthorizationFilter filter = new AuthorizationFilter();
+        FilterChain chain = mock(FilterChain.class);
+        HttpServletResponse buyerResponse = mock(HttpServletResponse.class);
+        filter.doFilter(request("/cart", session(user(UserRole.BUYER))), buyerResponse, chain);
+        verify(chain).doFilter(any(ServletRequest.class), eq(buyerResponse));
+        assertForbidden(filter, "/cart/add", user(UserRole.SELLER));
+    }
+
+    @Test
     void authorizationRedirectsGuestAndForwardsForbiddenUsersToSafePage() throws Exception {
         AuthorizationFilter filter = new AuthorizationFilter();
         HttpServletRequest guestRequest = request("/admin/users", null);

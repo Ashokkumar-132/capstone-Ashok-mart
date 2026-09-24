@@ -41,7 +41,24 @@
                         <div><dt>Availability</dt><dd><c:choose><c:when test="${product.inStock}">In stock · ${product.stockQuantity} available</c:when><c:otherwise>Out of stock</c:otherwise></c:choose></dd></div>
                     </dl>
                     <p class="rating-placeholder detail-rating">Ratings coming soon</p>
-                    <button class="primary-button add-cart-disabled" type="button" disabled title="Cart is coming in a later release">Add to cart <span>(coming soon)</span></button>
+                    <c:choose>
+                        <c:when test="${not product.inStock}">
+                            <p class="out-of-stock-note">This product is currently out of stock.</p>
+                        </c:when>
+                        <c:when test="${sessionScope.authenticatedUser.role == 'BUYER'}">
+                            <form action="${pageContext.request.contextPath}/cart/add" method="post" class="detail-cart-form">
+                                <input type="hidden" name="productId" value="${product.id}">
+                                <label for="detail-quantity">Quantity</label>
+                                <div class="detail-cart-actions">
+                                    <input id="detail-quantity" name="quantity" type="number" min="1" max="${product.stockQuantity}" value="1" required>
+                                    <button class="primary-button" type="submit">Add to cart</button>
+                                </div>
+                            </form>
+                        </c:when>
+                        <c:otherwise>
+                            <a class="primary-button login-to-cart" href="${pageContext.request.contextPath}/login">Log in to add to cart</a>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
             </section>
         </c:otherwise>

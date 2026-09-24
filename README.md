@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, and **Commit 08: the product catalog UI**. Cart operations, checkout, reviews UI, seller CRUD, and administrator product management are intentionally deferred to later commits.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, and **Commit 09: the buyer cart module**. Checkout, reviews UI, seller CRUD, and administrator product management are intentionally deferred to later commits.
 
 ## Technology stack
 
@@ -67,13 +67,19 @@ The catalog layer includes `Category` and `Product` persistence models, `Categor
 
 `ProductSearchCriteria` supports case-insensitive name/description search, category filtering, minimum and maximum price, in-stock filtering, and pagination. `ProductPage` returns products together with the current page, page size, total results, and total pages. Sorting is limited to the `ProductSort` whitelist (`NEWEST`, `PRICE_ASC`, `PRICE_DESC`, `NAME_ASC`, and `NAME_DESC`); trusted SQL fragments are selected in the DAO and user input is always bound as a prepared-statement parameter. Page numbers and sizes are normalized to safe bounds, and invalid price ranges are rejected.
 
-The service provides product detail retrieval, seller-product lookup, and an ownership helper that compares the persisted product seller ID with the authenticated user ID. It does not trust a submitted seller ID and does not implement seller CRUD, stock deduction, ratings, cart, or checkout. The schema adds focused indexes for product category, seller, enabled status, and price to support the catalog workload.
+The service provides product detail retrieval, seller-product lookup, and an ownership helper that compares the persisted product seller ID with the authenticated user ID. It does not trust a submitted seller ID and does not implement seller CRUD, stock deduction, ratings, or checkout. The schema adds focused indexes for product category, seller, enabled status, and price to support the catalog workload.
 
 ## Product catalog UI
 
 The customer-facing catalog is available at `GET /products`, with query parameters `q`, `category`, `minPrice`, `maxPrice`, `stock`, `sort`, `page`, and `size`. `ProductCatalogServlet` parses and validates those parameters, loads categories through `CategoryService`, loads products through `ProductService`, and forwards to the JSTL `products.jsp` view. Search, filters, sorting, and pagination preserve their state through safe `c:url`/`c:param` links.
 
-`GET /product?id=...` displays an active product detail page through `ProductDetailServlet`. Missing or inactive products receive a clean not-found state. The listing and detail views use the AshokMart responsive design system, accessible labels and focus states, real database image URLs when present, and a neutral placeholder when an image is unavailable. Stock quantities and prices are rendered from the backend; the disabled **Add to cart** control is only a future UI location and does not implement cart behavior. Ratings are reserved for the later reviews module.
+`GET /product?id=...` displays an active product detail page through `ProductDetailServlet`. Missing or inactive products receive a clean not-found state. The listing and detail views use the AshokMart responsive design system, accessible labels and focus states, real database image URLs when present, and a neutral placeholder when an image is unavailable. Stock quantities and prices are rendered from the backend. Buyers can submit the real **Add to cart** form; cart mutations remain server-authoritative. Ratings are reserved for the later reviews module.
+
+## Buyer cart module
+
+Commit 09 adds the database-backed buyer cart at `GET /cart`. State-changing operations use POST and redirect back to the cart with a flash message: `/cart/add`, `/cart/update`, `/cart/remove`, and `/cart/clear`. `CartDaoImpl` uses prepared statements against the existing `cart` and `cart_items` tables, prevents duplicate cart rows per user, and joins current product values for cart display.
+
+`CartServiceImpl` derives the user ID from the authenticated session at the servlet boundary and never accepts a browser-supplied user ID. It validates active products, positive quantities, stock limits, and authenticated ownership. Prices, line totals, item counts, and subtotal are recalculated with `BigDecimal` from current database prices on every cart read. Buyer-only authentication and authorization filters protect `/cart` and all cart mutation routes. Checkout remains a disabled future action and is not implemented in this commit.
 
 ## Database infrastructure
 
@@ -104,12 +110,13 @@ SLF4J with Logback records pool initialization, schema initialization, startup/s
 
 1. Install Java 17 and Maven.
 2. Clone this repository.
-3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog DAO/service behavior, search, filters, sorting, pagination, and ownership checks.
+3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog, cart DAO/service behavior, cart mutations, totals, stock validation, and servlet flows.
 4. Run `mvn package` to build the WAR.
 5. Copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
 6. Open `/products` from the public landing page to browse the catalog, or open `/register` and `/login` to exercise authentication.
+7. Register/login as a buyer, open a product, add it to the cart, and use `/cart` to update, remove, or clear items.
 
-At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI is available, while seller product CRUD and other marketplace transaction modules are not yet implemented.
+At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI and buyer cart are available, while checkout, reviews, seller product CRUD, and other marketplace transaction modules are not yet implemented.
 
 ## Maven commands
 

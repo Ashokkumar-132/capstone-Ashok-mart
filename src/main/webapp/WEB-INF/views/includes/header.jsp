@@ -5,6 +5,9 @@
         <a href="${pageContext.request.contextPath}/products">Shop</a>
         <c:choose>
             <c:when test="${not empty sessionScope.authenticatedUser}">
+                <c:if test="${sessionScope.authenticatedUser.role == 'BUYER'}">
+                    <a href="${pageContext.request.contextPath}/cart">Cart</a>
+                </c:if>
                 <span class="account-label">Hi, ${sessionScope.authenticatedUser.name}</span>
                 <form action="${pageContext.request.contextPath}/logout" method="post" class="inline-form">
                     <button type="submit" class="nav-button">Log out</button>
