@@ -2,6 +2,7 @@
 <header class="site-header">
     <a class="brand" href="${pageContext.request.contextPath}/">Ashok<span>Mart</span></a>
     <nav class="site-nav" aria-label="Primary navigation">
+        <a href="${pageContext.request.contextPath}/products">Shop</a>
         <c:choose>
             <c:when test="${not empty sessionScope.authenticatedUser}">
                 <span class="account-label">Hi, ${sessionScope.authenticatedUser.name}</span>

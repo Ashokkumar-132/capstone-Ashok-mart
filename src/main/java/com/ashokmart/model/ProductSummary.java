@@ -19,4 +19,16 @@ public record ProductSummary(
     public boolean isInStock() {
         return stockQuantity > 0;
     }
+
+    public long getId() { return id; }
+    public long getSellerId() { return sellerId; }
+    public String getSellerName() { return sellerName; }
+    public long getCategoryId() { return categoryId; }
+    public String getCategoryName() { return categoryName; }
+    public String getName() { return name; }
+    public String getDescription() { return description; }
+    public BigDecimal getPrice() { return price; }
+    public int getStockQuantity() { return stockQuantity; }
+    public String getImageUrl() { return imageUrl; }
+    public boolean isActive() { return active; }
 }

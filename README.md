@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, and **Commit 07: the product catalog backend**. The catalog JSP UI, cart operations, checkout, reviews UI, seller CRUD, and administrator product management are intentionally deferred to later commits.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, and **Commit 08: the product catalog UI**. Cart operations, checkout, reviews UI, seller CRUD, and administrator product management are intentionally deferred to later commits.
 
 ## Technology stack
 
@@ -69,6 +69,12 @@ The catalog layer includes `Category` and `Product` persistence models, `Categor
 
 The service provides product detail retrieval, seller-product lookup, and an ownership helper that compares the persisted product seller ID with the authenticated user ID. It does not trust a submitted seller ID and does not implement seller CRUD, stock deduction, ratings, cart, or checkout. The schema adds focused indexes for product category, seller, enabled status, and price to support the catalog workload.
 
+## Product catalog UI
+
+The customer-facing catalog is available at `GET /products`, with query parameters `q`, `category`, `minPrice`, `maxPrice`, `stock`, `sort`, `page`, and `size`. `ProductCatalogServlet` parses and validates those parameters, loads categories through `CategoryService`, loads products through `ProductService`, and forwards to the JSTL `products.jsp` view. Search, filters, sorting, and pagination preserve their state through safe `c:url`/`c:param` links.
+
+`GET /product?id=...` displays an active product detail page through `ProductDetailServlet`. Missing or inactive products receive a clean not-found state. The listing and detail views use the AshokMart responsive design system, accessible labels and focus states, real database image URLs when present, and a neutral placeholder when an image is unavailable. Stock quantities and prices are rendered from the backend; the disabled **Add to cart** control is only a future UI location and does not implement cart behavior. Ratings are reserved for the later reviews module.
+
 ## Database infrastructure
 
 The structural schema remains at `src/main/resources/schema.sql` and creates `users`, `categories`, `products`, `cart`, `cart_items`, `orders`, `order_items`, and `reviews`. It includes primary keys, foreign keys, unique constraints, role/status checks, numeric checks, referential-integrity rules, and focused catalog indexes.
@@ -101,9 +107,9 @@ SLF4J with Logback records pool initialization, schema initialization, startup/s
 3. Run `mvn clean test` to verify the schema, infrastructure, authentication, authorization, catalog DAO/service behavior, search, filters, sorting, pagination, and ownership checks.
 4. Run `mvn package` to build the WAR.
 5. Copy `target/AshokMart.war` to Tomcat 9's `webapps/` directory and open `http://localhost:8080/AshokMart/` after starting Tomcat.
-6. Open `/register` or `/login` from the public landing page to exercise the authentication flow.
+6. Open `/products` from the public landing page to browse the catalog, or open `/register` and `/login` to exercise authentication.
 
-At web-application startup, the listener initializes the configured H2 schema automatically. The catalog backend is ready for a later JSP UI, while seller product CRUD and other marketplace transaction modules are not yet implemented.
+At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI is available, while seller product CRUD and other marketplace transaction modules are not yet implemented.
 
 ## Maven commands
 
