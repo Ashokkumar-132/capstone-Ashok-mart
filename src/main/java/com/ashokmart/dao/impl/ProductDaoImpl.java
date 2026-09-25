@@ -1,6 +1,7 @@
 package com.ashokmart.dao.impl;
 
 import com.ashokmart.dao.ProductDao;
+import com.ashokmart.model.AdminProductQuery;
 import com.ashokmart.model.Product;
 import com.ashokmart.model.ProductSearchCriteria;
 import com.ashokmart.model.ProductSort;
@@ -173,6 +174,60 @@ public final class ProductDaoImpl implements ProductDao {
         }
     }
 
+    @Override
+    public List<ProductSummary> findAdminProducts(AdminProductQuery query) throws SQLException {
+        List<Object> parameters = new ArrayList<>();
+        String sql = summaryFrom() + adminWhere(query, parameters) + " ORDER BY p.created_at DESC, p.id DESC LIMIT ? OFFSET ?";
+        parameters.add(query.pageSize()); parameters.add(query.offset());
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            bind(statement, parameters);
+            try (ResultSet result = statement.executeQuery()) { List<ProductSummary> products = new ArrayList<>(); while (result.next()) products.add(mapSummary(result)); return products; }
+        }
+    }
+
+    @Override
+    public long countAdminProducts(AdminProductQuery query) throws SQLException {
+        List<Object> parameters = new ArrayList<>();
+        String sql = "SELECT COUNT(*) FROM products p" + adminWhere(query, parameters);
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) { bind(statement, parameters); try (ResultSet result = statement.executeQuery()) { result.next(); return result.getLong(1); } }
+    }
+
+    @Override
+    public Optional<ProductSummary> findAdminSummaryById(long productId) throws SQLException {
+        String sql = summaryFrom() + " WHERE p.id = ?";
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, productId);
+            try (ResultSet result = statement.executeQuery()) { return result.next() ? Optional.of(mapSummary(result)) : Optional.empty(); }
+        }
+    }
+
+    @Override
+    public boolean updateAdminStatus(long productId, boolean active) throws SQLException {
+        String sql = "UPDATE products SET enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) { statement.setBoolean(1, active); statement.setLong(2, productId); return statement.executeUpdate() == 1; }
+    }
+
+    @Override
+    public long countByStatus(Boolean active) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM products" + (active == null ? "" : " WHERE enabled = ?");
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) { if (active != null) statement.setBoolean(1, active); try (ResultSet result = statement.executeQuery()) { result.next(); return result.getLong(1); } }
+    }
+
+    @Override
+    public long countByStock(boolean inStock) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM products WHERE stock_quantity " + (inStock ? "> 0" : "= 0");
+        try (Connection connection = pool.getConnection(); PreparedStatement statement = connection.prepareStatement(sql); ResultSet result = statement.executeQuery()) { result.next(); return result.getLong(1); }
+    }
+
+    private String adminWhere(AdminProductQuery query, List<Object> parameters) {
+        StringBuilder where = new StringBuilder(" WHERE 1=1");
+        if (query.search() != null) { where.append(" AND (LOWER(p.name) LIKE ? OR LOWER(COALESCE(p.description, '')) LIKE ?)"); String value = "%" + query.search().toLowerCase() + "%"; parameters.add(value); parameters.add(value); }
+        if (query.categoryId() != null) { where.append(" AND p.category_id = ?"); parameters.add(query.categoryId()); }
+        if (query.active() != null) { where.append(" AND p.enabled = ?"); parameters.add(query.active()); }
+        if (query.inStock() != null) where.append(query.inStock() ? " AND p.stock_quantity > 0" : " AND p.stock_quantity = 0");
+        return where.toString();
+    }
+
     private void bindProduct(PreparedStatement statement, Product product) throws SQLException {
         statement.setLong(1, product.getSellerId());
         statement.setLong(2, product.getCategoryId());
@@ -238,6 +293,8 @@ public final class ProductDaoImpl implements ProductDao {
                 statement.setBigDecimal(position, value);
             } else if (parameter instanceof Integer value) {
                 statement.setInt(position, value);
+            } else if (parameter instanceof Boolean value) {
+                statement.setBoolean(position, value);
             } else {
                 throw new SQLException("Unsupported catalog query parameter");
             }

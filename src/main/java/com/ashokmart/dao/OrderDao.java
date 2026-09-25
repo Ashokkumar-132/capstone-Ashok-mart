@@ -1,6 +1,7 @@
 package com.ashokmart.dao;
 
 import com.ashokmart.model.CheckoutItem;
+import com.ashokmart.model.AdminOrderModels;
 import com.ashokmart.model.Order;
 import com.ashokmart.model.OrderItem;
 import com.ashokmart.model.OrderItemView;
@@ -28,4 +29,11 @@ public interface OrderDao {
     Optional<Order> findOrderForSeller(long orderId, long sellerId) throws SQLException;
     List<OrderItemView> findSellerOrderItems(long orderId, long sellerId) throws SQLException;
     boolean updateSellerOrderStatus(long orderId, long sellerId, String status) throws SQLException;
+    List<AdminOrderModels.Summary> findAdminOrders(AdminOrderModels.Query query) throws SQLException;
+    long countAdminOrders(AdminOrderModels.Query query) throws SQLException;
+    Optional<AdminOrderModels.Details> findAdminOrderDetails(long orderId) throws SQLException;
+    long countOrders() throws SQLException;
+    long countOrdersByStatus(String status) throws SQLException;
+    BigDecimal totalRevenue() throws SQLException;
+    BigDecimal averageOrderValue() throws SQLException;
 }

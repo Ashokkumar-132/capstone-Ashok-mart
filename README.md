@@ -116,6 +116,10 @@ Commit 11 adds `GET /orders` and buyer-scoped `GET /orders/view?id=...` detail p
 
 Order details display the stored `order_items.unit_price` and `subtotal` values created during checkout rather than today's product price. Product names and available image URLs are included for presentation, while order total, status, and creation timestamp come from the persisted order. The buyer-only `My Orders` navigation link appears in the shared header, and the checkout confirmation links to order history. Both history pages include responsive empty states and continue-shopping navigation.
 
+## Admin marketplace management
+
+Commit 15 expands the authenticated admin workspace with database-backed product and order management. Admins can search, filter, paginate, inspect, activate, and deactivate products without changing seller ownership, and can search and filter all orders by ID, buyer, email, or status. Admin order details show persisted order totals, buyer information, seller information, quantities, historical unit prices, and historical line subtotals without recalculating from current catalog prices. The dashboard now reports real user, product, order, revenue, and average-order metrics, and admin navigation links remain hidden from buyers and sellers while direct URLs remain protected.
+
 ## Database infrastructure
 
 The structural schema remains at `src/main/resources/schema.sql` and creates `users`, `categories`, `products`, `cart`, `cart_items`, `orders`, `order_items`, and `reviews`. It includes primary keys, foreign keys, unique constraints, role/status checks, numeric checks, referential-integrity rules, and focused catalog indexes.

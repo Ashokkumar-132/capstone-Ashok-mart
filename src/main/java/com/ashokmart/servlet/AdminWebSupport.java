@@ -3,7 +3,13 @@ package com.ashokmart.servlet;
 import com.ashokmart.model.AuthenticationResult;
 import com.ashokmart.model.UserRole;
 import com.ashokmart.service.AdminUserService;
+import com.ashokmart.service.AdminProductService;
+import com.ashokmart.service.AdminOrderService;
 import com.ashokmart.service.impl.AdminUserServiceImpl;
+import com.ashokmart.service.impl.AdminProductServiceImpl;
+import com.ashokmart.service.impl.AdminOrderServiceImpl;
+import com.ashokmart.dao.impl.ProductDaoImpl;
+import com.ashokmart.dao.impl.OrderDaoImpl;
 import com.ashokmart.dao.impl.UserDaoImpl;
 import com.ashokmart.util.DatabaseConnectionPool;
 
@@ -21,8 +27,10 @@ final class AdminWebSupport {
     }
 
     static AdminUserService adminUserService(DatabaseConnectionPool pool) {
-        return new AdminUserServiceImpl(new UserDaoImpl(pool));
+        return new AdminUserServiceImpl(new UserDaoImpl(pool), new ProductDaoImpl(pool), new OrderDaoImpl(pool));
     }
+    static AdminProductService adminProductService(DatabaseConnectionPool pool) { return new AdminProductServiceImpl(new ProductDaoImpl(pool), new UserDaoImpl(pool)); }
+    static AdminOrderService adminOrderService(DatabaseConnectionPool pool) { return new AdminOrderServiceImpl(new OrderDaoImpl(pool), new UserDaoImpl(pool)); }
 
     static AuthenticationResult authenticatedAdmin(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
@@ -42,5 +50,9 @@ final class AdminWebSupport {
 
     static void flash(HttpServletRequest request, String key, String value) {
         request.getSession(true).setAttribute(key, value);
+    }
+    static void moveFlash(javax.servlet.http.HttpSession session, HttpServletRequest request, String... keys) {
+        if (session == null) return;
+        for (String key : keys) { Object value = session.getAttribute(key); if (value != null) { request.setAttribute(key, value); session.removeAttribute(key); } }
     }
 }

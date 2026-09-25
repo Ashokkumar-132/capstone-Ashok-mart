@@ -1,6 +1,7 @@
 package com.ashokmart.dao;
 
 import com.ashokmart.model.Product;
+import com.ashokmart.model.AdminProductQuery;
 import com.ashokmart.model.ProductSearchCriteria;
 import com.ashokmart.model.ProductSummary;
 
@@ -19,4 +20,10 @@ public interface ProductDao {
     long create(Product product) throws SQLException;
     boolean updateOwned(Product product, long sellerId) throws SQLException;
     boolean updateStatus(long productId, long sellerId, boolean active) throws SQLException;
+    List<ProductSummary> findAdminProducts(AdminProductQuery query) throws SQLException;
+    long countAdminProducts(AdminProductQuery query) throws SQLException;
+    Optional<ProductSummary> findAdminSummaryById(long productId) throws SQLException;
+    boolean updateAdminStatus(long productId, boolean active) throws SQLException;
+    long countByStatus(Boolean active) throws SQLException;
+    long countByStock(boolean inStock) throws SQLException;
 }

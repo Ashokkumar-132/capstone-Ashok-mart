@@ -1,6 +1,7 @@
 package com.ashokmart.dao.impl;
 
 import com.ashokmart.dao.OrderDao;
+import com.ashokmart.model.AdminOrderModels;
 import com.ashokmart.model.CheckoutItem;
 import com.ashokmart.model.Order;
 import com.ashokmart.model.OrderItem;
@@ -236,6 +237,42 @@ public final class OrderDaoImpl implements OrderDao {
             return statement.executeUpdate() == 1;
         }
     }
+
+    @Override
+    public List<AdminOrderModels.Summary> findAdminOrders(AdminOrderModels.Query query) throws SQLException {
+        List<Object> params = new ArrayList<>();
+        String sql = "SELECT o.id, u.name buyer_name, u.email buyer_email, o.total_amount, o.status, o.created_at, COUNT(oi.id) item_count "
+                + "FROM orders o JOIN users u ON u.id=o.buyer_id LEFT JOIN order_items oi ON oi.order_id=o.id" + adminOrderWhere(query, params)
+                + " GROUP BY o.id,u.name,u.email,o.total_amount,o.status,o.created_at ORDER BY o.created_at DESC,o.id DESC LIMIT ? OFFSET ?";
+        params.add(query.pageSize()); params.add(query.offset());
+        try (Connection c=pool.getConnection(); PreparedStatement s=c.prepareStatement(sql)) { bindAdmin(s, params); try(ResultSet r=s.executeQuery()){ List<AdminOrderModels.Summary> out=new ArrayList<>(); while(r.next()) out.add(new AdminOrderModels.Summary(r.getLong("id"),r.getString("buyer_name"),r.getString("buyer_email"),r.getBigDecimal("total_amount"),r.getString("status"),r.getTimestamp("created_at").toLocalDateTime(),r.getLong("item_count"))); return out; } }
+    }
+
+    @Override
+    public long countAdminOrders(AdminOrderModels.Query query) throws SQLException {
+        List<Object> params = new ArrayList<>(); String sql="SELECT COUNT(*) FROM orders o JOIN users u ON u.id=o.buyer_id"+adminOrderWhere(query,params);
+        try(Connection c=pool.getConnection(); PreparedStatement s=c.prepareStatement(sql)){bindAdmin(s,params);try(ResultSet r=s.executeQuery()){r.next();return r.getLong(1);}}
+    }
+
+    @Override
+    public Optional<AdminOrderModels.Details> findAdminOrderDetails(long orderId) throws SQLException {
+        if(orderId<=0)return Optional.empty();
+        String orderSql="SELECT o.id,o.buyer_id,o.total_amount,o.status,o.created_at,u.name buyer_name,u.email buyer_email FROM orders o JOIN users u ON u.id=o.buyer_id WHERE o.id=?";
+        try(Connection c=pool.getConnection(); PreparedStatement s=c.prepareStatement(orderSql)){s.setLong(1,orderId);try(ResultSet r=s.executeQuery()){if(!r.next())return Optional.empty();Order order=mapOrder(r);String buyer=r.getString("buyer_name"), email=r.getString("buyer_email");
+            String itemSql="SELECT oi.product_id,p.name product_name,s.name seller_name,s.email seller_email,oi.quantity,oi.unit_price,oi.subtotal FROM order_items oi JOIN products p ON p.id=oi.product_id JOIN users s ON s.id=oi.seller_id WHERE oi.order_id=? ORDER BY oi.id";
+            List<AdminOrderModels.Item> items=new ArrayList<>(); try(PreparedStatement is=c.prepareStatement(itemSql)){is.setLong(1,orderId);try(ResultSet ir=is.executeQuery()){while(ir.next())items.add(new AdminOrderModels.Item(ir.getLong("product_id"),ir.getString("product_name"),ir.getString("seller_name"),ir.getString("seller_email"),ir.getInt("quantity"),ir.getBigDecimal("unit_price"),ir.getBigDecimal("subtotal")));}}
+            return Optional.of(new AdminOrderModels.Details(order,buyer,email,items));}}
+    }
+
+    @Override public long countOrders() throws SQLException { return aggregate("SELECT COUNT(*) FROM orders", null); }
+    @Override public long countOrdersByStatus(String status) throws SQLException { return aggregate("SELECT COUNT(*) FROM orders WHERE status = ?", status); }
+    @Override public BigDecimal totalRevenue() throws SQLException { return decimalAggregate("SELECT COALESCE(SUM(total_amount),0) FROM orders"); }
+    @Override public BigDecimal averageOrderValue() throws SQLException { return decimalAggregate("SELECT COALESCE(AVG(total_amount),0) FROM orders"); }
+
+    private String adminOrderWhere(AdminOrderModels.Query query,List<Object> params){StringBuilder w=new StringBuilder(" WHERE 1=1");if(query.search()!=null){w.append(" AND (CAST(o.id AS VARCHAR) LIKE ? OR LOWER(u.name) LIKE ? OR LOWER(u.email) LIKE ?)");String v="%"+query.search().toLowerCase()+"%";params.add(v);params.add(v);params.add(v);}if(query.status()!=null){w.append(" AND o.status=?");params.add(query.status());}return w.toString();}
+    private void bindAdmin(PreparedStatement s,List<Object> params)throws SQLException{for(int i=0;i<params.size();i++){Object p=params.get(i);if(p instanceof String v)s.setString(i+1,v);else s.setObject(i+1,p);}}
+    private long aggregate(String sql,String value)throws SQLException{try(Connection c=pool.getConnection();PreparedStatement s=c.prepareStatement(sql)){if(value!=null)s.setString(1,value);try(ResultSet r=s.executeQuery()){r.next();return r.getLong(1);}}}
+    private BigDecimal decimalAggregate(String sql)throws SQLException{try(Connection c=pool.getConnection();PreparedStatement s=c.prepareStatement(sql);ResultSet r=s.executeQuery()){r.next();BigDecimal value=r.getBigDecimal(1);return value==null?BigDecimal.ZERO:value.setScale(2,java.math.RoundingMode.HALF_UP);}}
 
     private Order mapOrder(ResultSet result) throws SQLException {
         return new Order(result.getLong("id"), result.getLong("buyer_id"),

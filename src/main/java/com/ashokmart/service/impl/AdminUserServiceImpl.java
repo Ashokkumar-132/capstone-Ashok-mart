@@ -1,6 +1,8 @@
 package com.ashokmart.service.impl;
 
 import com.ashokmart.dao.UserDao;
+import com.ashokmart.dao.ProductDao;
+import com.ashokmart.dao.OrderDao;
 import com.ashokmart.model.AdminStatistics;
 import com.ashokmart.model.AdminUserPage;
 import com.ashokmart.model.AdminUserQuery;
@@ -19,18 +21,30 @@ import java.util.Optional;
 public final class AdminUserServiceImpl implements AdminUserService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AdminUserServiceImpl.class);
     private final UserDao userDao;
+    private final ProductDao productDao;
+    private final OrderDao orderDao;
 
     public AdminUserServiceImpl(UserDao userDao) {
+        this(userDao, null, null);
+    }
+
+    public AdminUserServiceImpl(UserDao userDao, ProductDao productDao, OrderDao orderDao) {
         this.userDao = userDao;
+        this.productDao = productDao;
+        this.orderDao = orderDao;
     }
 
     @Override
     public AdminStatistics getStatistics(long authenticatedAdminId) {
         requireAdmin(authenticatedAdminId);
         try {
-            return new AdminStatistics(userDao.countUsers(), userDao.countUsersByRole(UserRole.BUYER),
+            AdminStatistics users = new AdminStatistics(userDao.countUsers(), userDao.countUsersByRole(UserRole.BUYER),
                     userDao.countUsersByRole(UserRole.SELLER), userDao.countUsersByRole(UserRole.ADMIN),
                     userDao.countUsersByStatus(true), userDao.countUsersByStatus(false));
+            if (productDao == null || orderDao == null) return users;
+            return new AdminStatistics(users.getTotalUsers(), users.getBuyers(), users.getSellers(), users.getAdmins(), users.getActiveUsers(), users.getInactiveUsers(),
+                    productDao.countByStatus(null), productDao.countByStatus(true), productDao.countByStatus(false), productDao.countByStock(true), productDao.countByStock(false),
+                    orderDao.countOrders(), orderDao.totalRevenue(), orderDao.averageOrderValue());
         } catch (SQLException exception) {
             LOGGER.error("Admin statistics lookup failed", exception);
             throw new IllegalStateException("Admin statistics are temporarily unavailable", exception);
