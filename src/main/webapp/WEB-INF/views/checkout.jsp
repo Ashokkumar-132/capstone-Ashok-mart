@@ -54,7 +54,7 @@
                     <h2 id="checkout-summary-heading">Order summary</h2>
                     <div class="summary-row"><span>Items</span><span>${cart.itemCount}</span></div>
                     <div class="summary-row total-row"><strong>Total</strong><strong><fmt:formatNumber value="${cart.subtotal}" type="currency" currencyCode="USD" /></strong></div>
-                    <form action="${pageContext.request.contextPath}/checkout" method="post" onsubmit="this.querySelector('button').disabled=true;">
+                    <form action="${pageContext.request.contextPath}/checkout" method="post" onsubmit="this.querySelector('button').disabled=true;"><input type="hidden" name="_csrf" value="${sessionScope.csrfToken}">
                         <button class="primary-button" type="submit">Place order</button>
                     </form>
                     <p class="checkout-note">Your total and prices are recalculated from the database when you place the order.</p>

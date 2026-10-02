@@ -57,13 +57,13 @@
                                 </c:choose>
                             </div>
                             <div class="cart-item-controls">
-                                <form action="${pageContext.request.contextPath}/cart/update" method="post" class="quantity-form">
+                                <form action="${pageContext.request.contextPath}/cart/update" method="post" class="quantity-form"><input type="hidden" name="_csrf" value="${sessionScope.csrfToken}">
                                     <label for="quantity-${item.productId}">Quantity</label>
                                     <input id="quantity-${item.productId}" name="quantity" type="number" min="1" max="${item.availableStock}" value="${item.quantity}" <c:if test="${not item.active or item.availableStock < 1}">disabled</c:if>>
                                     <input type="hidden" name="productId" value="${item.productId}">
                                     <button type="submit" class="text-button" <c:if test="${not item.active or item.availableStock < 1}">disabled</c:if>>Update</button>
                                 </form>
-                                <form action="${pageContext.request.contextPath}/cart/remove" method="post">
+                                <form action="${pageContext.request.contextPath}/cart/remove" method="post"><input type="hidden" name="_csrf" value="${sessionScope.csrfToken}">
                                     <input type="hidden" name="productId" value="${item.productId}">
                                     <button type="submit" class="remove-button">Remove</button>
                                 </form>
@@ -77,7 +77,7 @@
                     <div class="summary-row"><span>Items</span><span>${cart.itemCount}</span></div>
                     <div class="summary-row total-row"><strong>Subtotal</strong><strong><fmt:formatNumber value="${cart.subtotal}" type="currency" currencyCode="USD" /></strong></div>
                     <a class="primary-button checkout-link" href="${pageContext.request.contextPath}/checkout">Proceed to checkout</a>
-                    <form action="${pageContext.request.contextPath}/cart/clear" method="post">
+                    <form action="${pageContext.request.contextPath}/cart/clear" method="post"><input type="hidden" name="_csrf" value="${sessionScope.csrfToken}">
                         <button class="clear-cart-button" type="submit">Clear cart</button>
                     </form>
                     <p class="summary-note">Prices are refreshed from the marketplace for every cart request.</p>

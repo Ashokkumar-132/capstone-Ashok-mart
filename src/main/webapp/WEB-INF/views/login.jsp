@@ -25,7 +25,7 @@
         <c:if test="${param.registered == 'true'}">
             <div class="form-message success" role="status">Your account is ready. You can log in now.</div>
         </c:if>
-        <form action="${pageContext.request.contextPath}/login" method="post">
+        <form action="${pageContext.request.contextPath}/login" method="post"><input type="hidden" name="_csrf" value="${sessionScope.csrfToken}">
             <div class="form-field">
                 <label for="email">Email address</label>
                 <input id="email" name="email" type="email" autocomplete="email" required maxlength="255" value="${param.email}">

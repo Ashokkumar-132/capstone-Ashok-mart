@@ -22,7 +22,7 @@
         <c:if test="${not empty requestScope.registerError}">
             <div class="form-message error" role="alert">${requestScope.registerError}</div>
         </c:if>
-        <form action="${pageContext.request.contextPath}/register" method="post" data-register-form>
+        <form action="${pageContext.request.contextPath}/register" method="post" data-register-form><input type="hidden" name="_csrf" value="${sessionScope.csrfToken}">
             <div class="form-field">
                 <label for="name">Full name</label>
                 <input id="name" name="name" type="text" autocomplete="name" required maxlength="120" value="${param.name}">

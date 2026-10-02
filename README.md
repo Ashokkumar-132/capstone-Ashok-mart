@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, transactional buyer checkout, buyer order history, seller dashboard/product CRUD, seller order management/status, admin dashboard/product/order management, and **Commit 16: buyer reviews and ratings**.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, transactional buyer checkout, buyer order history, seller dashboard/product CRUD, seller order management/status, admin dashboard/product/order management, buyer reviews and ratings, UI redesign, and **Commit 18: validation, security, and error-handling hardening**.
 
 ## Technology stack
 
@@ -85,6 +85,10 @@ Commit 16 adds database-backed buyer reviews to product detail pages. The existi
 ## UI redesign and responsive polish
 
 Commit 17 standardizes the AshokMart visual system across the public, buyer, seller, admin, and review experiences. Shared authentication-aware navigation now includes marketplace search, role-specific links, accessible focus states, and a reusable footer. The landing page presents the real marketplace without fake product data. Common colors, typography, buttons, form controls, feedback states, and responsive layout rules are reused across the existing page-specific stylesheets. Every page keeps its original server-rendered forms, authorization boundaries, and backend-authoritative prices, totals, statuses, and ownership rules.
+
+## Validation, security, and error handling
+
+Commit 18 adds shared boundary validation for required strings, IDs, quantities, prices, ratings, statuses, and pagination. The central authorization filter now protects `/reviews/*` for buyers, while a session-generated CSRF token is included in every server-rendered POST form and verified by `CsrfFilter`. Security headers include `nosniff`, frame denial, strict referrer policy, authenticated-page no-store caching, and a compatible content security policy. Tomcat error mappings provide safe 400, 403, 404, and 500 pages without exposing stack traces, SQL, credentials, or internal paths. Existing server-side ownership, transactional checkout, password hashing, session regeneration, and backend-authoritative totals remain unchanged.
 
 ## Seller order management
 

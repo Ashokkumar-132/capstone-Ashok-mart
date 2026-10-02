@@ -26,7 +26,7 @@
                     <a href="${pageContext.request.contextPath}/admin/orders">Orders</a>
                 </c:if>
                 <span class="account-label">Hi, <c:out value="${sessionScope.authenticatedUser.name}"/></span>
-                <form action="${pageContext.request.contextPath}/logout" method="post" class="inline-form"><button type="submit" class="nav-button">Log out</button></form>
+                <form action="${pageContext.request.contextPath}/logout" method="post" class="inline-form"><input type="hidden" name="_csrf" value="${sessionScope.csrfToken}"><button type="submit" class="nav-button">Log out</button></form>
             </c:when>
             <c:otherwise>
                 <a href="${pageContext.request.contextPath}/login">Log in</a>
