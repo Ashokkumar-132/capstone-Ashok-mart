@@ -111,7 +111,7 @@
                                         <c:otherwise><span class="stock-badge out-stock">Out of stock</span></c:otherwise>
                                     </c:choose>
                                 </div>
-                                <p class="rating-placeholder">Ratings coming soon</p>
+                                <p class="rating-placeholder">See ratings and reviews on the product page</p>
                                 <a class="card-link" href="${pageContext.request.contextPath}/product?id=${product.id}">View details <span aria-hidden="true">→</span></a>
                             </div>
                         </article>
@@ -158,5 +158,6 @@
         </c:choose>
     </section>
 </main>
+<jsp:include page="/WEB-INF/views/includes/footer.jsp" />
 </body>
 </html>

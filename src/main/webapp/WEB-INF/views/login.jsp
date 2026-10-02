@@ -39,5 +39,6 @@
         <p class="form-footer">New to AshokMart? <a href="${pageContext.request.contextPath}/register">Create an account</a></p>
     </section>
 </main>
+<jsp:include page="/WEB-INF/views/includes/footer.jsp" />
 </body>
 </html>

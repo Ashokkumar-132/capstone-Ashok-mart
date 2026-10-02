@@ -82,6 +82,10 @@ Account deactivation preserves users and their historical relationships. Existin
 
 Commit 16 adds database-backed buyer reviews to product detail pages. The existing `reviews` table and unique `(product_id, buyer_id)` constraint are reused. Reviews display reviewer name, rating, comment, date, average rating, and real review count. A buyer can create a review only after purchasing the product through a non-cancelled order, and can edit or delete only their own review. All review mutations use buyer authentication from the HTTP session, server-side rating/comment validation, prepared JDBC statements, and POST/PRG flows. Sellers, administrators, and anonymous visitors cannot use buyer review-management endpoints; anonymous visitors can still read published reviews.
 
+## UI redesign and responsive polish
+
+Commit 17 standardizes the AshokMart visual system across the public, buyer, seller, admin, and review experiences. Shared authentication-aware navigation now includes marketplace search, role-specific links, accessible focus states, and a reusable footer. The landing page presents the real marketplace without fake product data. Common colors, typography, buttons, form controls, feedback states, and responsive layout rules are reused across the existing page-specific stylesheets. Every page keeps its original server-rendered forms, authorization boundaries, and backend-authoritative prices, totals, statuses, and ownership rules.
+
 ## Seller order management
 
 Commit 13 adds seller-scoped order management at `GET /seller/orders`, seller-owned detail views at `GET /seller/orders/view?id=...`, and POST-only status updates at `/seller/orders/status`. DAO queries join `orders`, `order_items`, and `products` and verify both the persisted order-item seller and product seller against the authenticated session seller. A seller sees only orders containing that seller's products, only that seller's line items, and a seller-specific subtotal calculated from stored historical `order_items.subtotal` values.
