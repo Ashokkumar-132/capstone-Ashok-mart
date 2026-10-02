@@ -2,6 +2,7 @@ package com.ashokmart.servlet;
 
 import com.ashokmart.dao.impl.ProductDaoImpl;
 import com.ashokmart.service.ProductService;
+import com.ashokmart.service.ReviewService;
 import com.ashokmart.service.impl.ProductServiceImpl;
 import com.ashokmart.util.DatabaseConnectionPool;
 import org.slf4j.Logger;
@@ -38,6 +39,18 @@ public final class ProductDetailServlet extends HttpServlet {
                 return;
             }
             request.setAttribute("product", product.get());
+            DatabaseConnectionPool reviewPool = pool(request);
+            ReviewService reviewService = ReviewWebSupport.service(reviewPool);
+            request.setAttribute("reviews", reviewService.getProductReviews(productId));
+            request.setAttribute("reviewCount", reviewService.getReviewCount(productId));
+            request.setAttribute("averageRating", reviewService.getAverageRating(productId));
+            javax.servlet.http.HttpSession session = request.getSession(false);
+            Object auth = session == null ? null : session.getAttribute(LoginServlet.AUTHENTICATED_USER_ATTRIBUTE);
+            if (auth instanceof com.ashokmart.model.AuthenticationResult buyer && buyer.role() == com.ashokmart.model.UserRole.BUYER) {
+                request.setAttribute("buyerReview", reviewService.getBuyerReview(buyer.userId(), productId).orElse(null));
+                request.setAttribute("canReview", reviewService.canReview(buyer.userId(), productId));
+            }
+            moveFlash(session, request, "reviewSuccess", "reviewError");
             request.getRequestDispatcher("/WEB-INF/views/product-detail.jsp").forward(request, response);
         } catch (IllegalStateException exception) {
             LOGGER.error("Product detail lookup failed", exception);
@@ -51,6 +64,17 @@ public final class ProductDetailServlet extends HttpServlet {
             throw new IllegalStateException("Catalog database is unavailable");
         }
         return new ProductServiceImpl(new ProductDaoImpl(pool));
+    }
+
+    private DatabaseConnectionPool pool(HttpServletRequest request) {
+        Object value = getServletContext().getAttribute(DatabaseConnectionPool.CONTEXT_ATTRIBUTE);
+        if (!(value instanceof DatabaseConnectionPool pool)) throw new IllegalStateException("Review database is unavailable");
+        return pool;
+    }
+
+    private void moveFlash(javax.servlet.http.HttpSession session, HttpServletRequest request, String... keys) {
+        if (session == null) return;
+        for (String key : keys) { Object value = session.getAttribute(key); if (value != null) { request.setAttribute(key, value); session.removeAttribute(key); } }
     }
 
     private void forwardNotFound(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

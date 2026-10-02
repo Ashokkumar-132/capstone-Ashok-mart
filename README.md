@@ -1,6 +1,6 @@
 # AshokMart
 
-AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, transactional buyer checkout, buyer order history, seller dashboard/product CRUD, seller order management/status, and **Commit 14: admin dashboard and user management**. Reviews UI and other marketplace management modules are intentionally deferred to later commits.
+AshokMart is a Java-based multi-vendor e-commerce web application. The repository currently contains the project foundation, database schema and infrastructure, authentication, role-based authorization, product catalog UI, buyer cart, transactional buyer checkout, buyer order history, seller dashboard/product CRUD, seller order management/status, admin dashboard/product/order management, and **Commit 16: buyer reviews and ratings**.
 
 ## Technology stack
 
@@ -78,6 +78,10 @@ Admin routes are protected by the existing `AuthorizationFilter` and require `AD
 
 Account deactivation preserves users and their historical relationships. Existing login behavior already rejects disabled accounts. The current admin cannot deactivate their own account, and the service prevents deactivation of the final active administrator. Redundant activate/deactivate requests are rejected with a safe message, and all mutations use POST plus PRG redirects.
 
+## Reviews and ratings
+
+Commit 16 adds database-backed buyer reviews to product detail pages. The existing `reviews` table and unique `(product_id, buyer_id)` constraint are reused. Reviews display reviewer name, rating, comment, date, average rating, and real review count. A buyer can create a review only after purchasing the product through a non-cancelled order, and can edit or delete only their own review. All review mutations use buyer authentication from the HTTP session, server-side rating/comment validation, prepared JDBC statements, and POST/PRG flows. Sellers, administrators, and anonymous visitors cannot use buyer review-management endpoints; anonymous visitors can still read published reviews.
+
 ## Seller order management
 
 Commit 13 adds seller-scoped order management at `GET /seller/orders`, seller-owned detail views at `GET /seller/orders/view?id=...`, and POST-only status updates at `/seller/orders/status`. DAO queries join `orders`, `order_items`, and `products` and verify both the persisted order-item seller and product seller against the authenticated session seller. A seller sees only orders containing that seller's products, only that seller's line items, and a seller-specific subtotal calculated from stored historical `order_items.subtotal` values.
@@ -96,7 +100,7 @@ The service provides product detail retrieval, seller-product lookup, and an own
 
 The customer-facing catalog is available at `GET /products`, with query parameters `q`, `category`, `minPrice`, `maxPrice`, `stock`, `sort`, `page`, and `size`. `ProductCatalogServlet` parses and validates those parameters, loads categories through `CategoryService`, loads products through `ProductService`, and forwards to the JSTL `products.jsp` view. Search, filters, sorting, and pagination preserve their state through safe `c:url`/`c:param` links.
 
-`GET /product?id=...` displays an active product detail page through `ProductDetailServlet`. Missing or inactive products receive a clean not-found state. The listing and detail views use the AshokMart responsive design system, accessible labels and focus states, real database image URLs when present, and a neutral placeholder when an image is unavailable. Stock quantities and prices are rendered from the backend. Buyers can submit the real **Add to cart** form; cart mutations remain server-authoritative. Ratings are reserved for the later reviews module.
+`GET /product?id=...` displays an active product detail page through `ProductDetailServlet`. Missing or inactive products receive a clean not-found state. The listing and detail views use the AshokMart responsive design system, accessible labels and focus states, real database image URLs when present, and a neutral placeholder when an image is unavailable. Stock quantities, prices, ratings, and review summaries are rendered from the backend. Buyers can submit the real **Add to cart** form; cart mutations remain server-authoritative.
 
 ## Buyer cart module
 
@@ -160,7 +164,7 @@ SLF4J with Logback records pool initialization, schema initialization, startup/s
 11. Open **Seller Orders**, verify only owned items and seller subtotal are shown, then advance a relevant order through a valid status transition.
 12. Log in as an admin, open **Admin Dashboard**, then search/filter users and activate/deactivate a test buyer or seller account from **User Management**.
 
-At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI, buyer cart, transactional checkout, buyer order history, seller product management, seller order management, and admin user management are available, while reviews and other marketplace management modules are not yet implemented.
+At web-application startup, the listener initializes the configured H2 schema automatically. The catalog UI, buyer cart, transactional checkout, buyer order history, buyer reviews, seller product management, seller order management, and admin user/product/order management are available.
 
 ## Maven commands
 

@@ -1,0 +1,3 @@
+package com.ashokmart.service;
+import com.ashokmart.model.Review; import java.math.BigDecimal; import java.util.List; import java.util.Optional;
+public interface ReviewService { List<Review> getProductReviews(long productId); Optional<Review> getReview(long reviewId); Optional<Review> getBuyerReview(long buyerId,long productId); BigDecimal getAverageRating(long productId); long getReviewCount(long productId); boolean canReview(long buyerId,long productId); long createReview(long buyerId,long productId,int rating,String comment); void updateReview(long buyerId,long reviewId,int rating,String comment); void deleteReview(long buyerId,long reviewId); }
