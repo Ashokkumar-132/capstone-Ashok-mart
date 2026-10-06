@@ -20,6 +20,9 @@ public final class DatabaseConnectionPool implements AutoCloseable {
         hikariConfig.setJdbcUrl(databaseConfig.getJdbcUrl());
         hikariConfig.setUsername(databaseConfig.getUsername());
         hikariConfig.setPassword(databaseConfig.getPassword());
+        if (databaseConfig.getJdbcUrl().startsWith("jdbc:h2:")) {
+            hikariConfig.setDriverClassName("org.h2.Driver");
+        }
         hikariConfig.setMaximumPoolSize(databaseConfig.getMaximumPoolSize());
         hikariConfig.setMinimumIdle(databaseConfig.getMinimumIdle());
         hikariConfig.setConnectionTimeout(databaseConfig.getConnectionTimeoutMs());
