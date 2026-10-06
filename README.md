@@ -153,6 +153,25 @@ The structural schema remains at `src/main/resources/schema.sql` and creates `us
 
 No production credentials are committed. Local H2 database artifacts and `target/` are ignored by Git. Automated tests use isolated in-memory H2 databases and never depend on a local database file.
 
+## QA and Railway deployment preparation
+
+Commit 19 adds a Docker-based deployment path that keeps the required Maven WAR and Tomcat 9 architecture unchanged. The multi-stage `Dockerfile` runs the Maven build with Java 17, copies `target/AshokMart.war` into Tomcat as the root application, and exposes Tomcat's standard port `8080`. `.dockerignore` excludes Git metadata, local H2 files, IDE files, logs, and Maven output from the build context.
+
+For local QA, run `mvn clean test` followed by `mvn package`. The expected artifact is `target/AshokMart.war`; inspect it with `jar tf target/AshokMart.war` when checking packaged classes, JSPs, CSS/JavaScript, `schema.sql`, and `WEB-INF/web.xml`. No production deployment is performed by this commit.
+
+To prepare a Railway service, connect the GitHub repository, allow Railway to build from the repository `Dockerfile`, and expose container port `8080`. Set the following variables in the Railway service without committing their values:
+
+| Variable | Purpose | Local/default behavior |
+| --- | --- | --- |
+| `ASHOKMART_DB_URL` | JDBC URL | File-based H2 at `./data/ashokmart` |
+| `ASHOKMART_DB_USER` | Database username | `sa` |
+| `ASHOKMART_DB_PASSWORD` | Database password | Empty for local H2 |
+| `ASHOKMART_DB_MAX_POOL_SIZE` | Hikari maximum pool size | `10` |
+| `ASHOKMART_DB_MIN_IDLE` | Hikari minimum idle connections | `2` |
+| `ASHOKMART_DB_CONNECTION_TIMEOUT_MS` | Hikari connection timeout | `30000` |
+
+The default H2 database is suitable for local development and test demonstrations. For a persistent Railway service, attach a persistent volume mounted at `/opt/ashokmart-data` and set `ASHOKMART_DB_URL=jdbc:h2:/opt/ashokmart-data/ashokmart;DB_CLOSE_ON_EXIT=FALSE`, or provide a compatible JDBC URL through the same environment variable. Railway deployment and live smoke testing remain intentionally deferred to Commit 20.
+
 ## Logging and security
 
 SLF4J with Logback records pool initialization, schema initialization, startup/shutdown, and failures. Database passwords, password hashes, session IDs, and other secrets are never logged or placed in JSP/session state. Credential submissions use POST, logout uses POST, and login session ID regeneration protects against session fixation.

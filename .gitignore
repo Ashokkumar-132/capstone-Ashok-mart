@@ -2,8 +2,14 @@
 target/
 
 # Local H2 databases
+data/
 *.mv.db
 *.trace.db
+
+# Local environment and deployment credentials
+.env
+.env.*
+!.env.example
 
 # IDEs
 .idea/

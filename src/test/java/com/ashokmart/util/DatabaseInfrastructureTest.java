@@ -12,6 +12,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DatabaseInfrastructureTest {
@@ -46,6 +47,24 @@ class DatabaseInfrastructureTest {
                 System.setProperty(DatabaseConfig.JDBC_URL_PROPERTY, original);
             }
         }
+    }
+
+    @Test
+    void rejectsUnsafePoolConfiguration() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new DatabaseConfig("jdbc:h2:mem:invalid", "sa", "", 0, 0, 5_000));
+        assertThrows(IllegalArgumentException.class,
+                () -> new DatabaseConfig("jdbc:h2:mem:invalid", "sa", "", 2, 3, 5_000));
+        assertThrows(IllegalArgumentException.class,
+                () -> new DatabaseConfig("jdbc:h2:mem:invalid", "sa", "", 2, 0, 100));
+    }
+
+    @Test
+    void testingConfigurationUsesIsolatedSafePoolDefaults() {
+        DatabaseConfig config = DatabaseConfig.forTesting("jdbc:h2:mem:qa");
+        assertEquals(2, config.getMaximumPoolSize());
+        assertEquals(0, config.getMinimumIdle());
+        assertEquals(5_000L, config.getConnectionTimeoutMs());
     }
 
     @Test
