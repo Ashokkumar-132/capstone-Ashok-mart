@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<fmt:setLocale value="en_IN"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,9 +33,9 @@
                 <div class="order-meta"><span>Order #${order.id}</span><span>Status: ${order.status}</span><span>${order.createdAt}</span></div>
             </section>
             <section class="confirmation-card" aria-labelledby="purchased-items-heading">
-                <div class="confirmation-card-heading"><h2 id="purchased-items-heading">Purchased items</h2><strong><fmt:formatNumber value="${order.totalAmount}" type="currency" currencyCode="USD" /></strong></div>
+                <div class="confirmation-card-heading"><h2 id="purchased-items-heading">Purchased items</h2><strong><fmt:formatNumber value="${order.totalAmount}" pattern="₹#,##,##0.00" /></strong></div>
                 <c:forEach items="${orderItems}" var="item">
-                    <div class="confirmation-item"><span>${item.productName} <small>× ${item.quantity}</small></span><strong><fmt:formatNumber value="${item.subtotal}" type="currency" currencyCode="USD" /></strong></div>
+                    <div class="confirmation-item"><span>${item.productName} <small>× ${item.quantity}</small></span><strong><fmt:formatNumber value="${item.subtotal}" pattern="₹#,##,##0.00" /></strong></div>
                 </c:forEach>
             </section>
             <div class="confirmation-actions">

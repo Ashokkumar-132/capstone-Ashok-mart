@@ -223,3 +223,9 @@ The seed contains the following verified distribution:
 | **Total** | **150** |
 
 Every seeded row has a distinct name and description, an INR price, positive stock, a valid seller/category reference, and a category-matched Unsplash image URL. Catalog cards continue to use the existing responsive `object-fit: cover` styling and the existing image fallback behavior. Ratings and review counts remain database-derived; the seed does not invent reviews or ratings.
+
+## INR presentation and product imagery
+
+All customer, seller, and admin JSP monetary displays use `INR` with the `en_IN` locale and show the rupee symbol, for example `₹1,25,000.00`. Authoritative prices and totals remain `BigDecimal` values in the existing DECIMAL database columns; formatting never converts or mutates stored amounts. `CurrencyUtil` provides the shared Java-side formatter and enforces Indian lakh grouping on runtimes whose locale data uses western grouping.
+
+The 150 seeded products use 44 verified, category-appropriate Unsplash image URLs distributed across the catalog rather than one generic image. Product, cart, checkout, order-history, seller, and admin image tags include accessible product-name alternative text. The shared `image-fallback.js` handler replaces an unavailable remote image with an accessible AshokMart placeholder without using inline script handlers, preserving the existing content-security policy.

@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<fmt:setLocale value="en_IN"/>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,7 +31,7 @@
                 <h2 id="order-summary-heading" class="sr-only">Order summary</h2>
                 <div><span class="summary-label">Placed</span><strong>${orderDetails.order.createdAt}</strong></div>
                 <div><span class="summary-label">Status</span><strong class="order-status status-${fn:toLowerCase(orderDetails.order.status)}"><span class="status-dot" aria-hidden="true"></span>${orderDetails.order.status}</strong></div>
-                <div><span class="summary-label">Total</span><strong><fmt:formatNumber value="${orderDetails.order.totalAmount}" type="currency" currencyCode="USD" /></strong></div>
+                <div><span class="summary-label">Total</span><strong><fmt:formatNumber value="${orderDetails.order.totalAmount}" pattern="₹#,##,##0.00" /></strong></div>
             </section>
             <section class="order-items-card" aria-labelledby="order-items-heading">
                 <div class="order-items-heading"><h2 id="order-items-heading">Items in this order</h2><span>${fn:length(orderDetails.items)} item<c:if test="${fn:length(orderDetails.items) != 1}">s</c:if></span></div>
@@ -38,15 +39,15 @@
                     <article class="history-item">
                         <div class="history-item-image">
                             <c:choose>
-                                <c:when test="${not empty item.imageUrl}"><img src="${item.imageUrl}" alt="${item.productName}"></c:when>
+                                <c:when test="${not empty item.imageUrl}"><img data-image-fallback src="${item.imageUrl}" alt="${item.productName}"></c:when>
                                 <c:otherwise><span class="image-placeholder">Ashok<span>Mart</span></span></c:otherwise>
                             </c:choose>
                         </div>
-                        <div class="history-item-copy"><h3>${item.productName}</h3><p>${item.quantity} × <fmt:formatNumber value="${item.unitPrice}" type="currency" currencyCode="USD" /> at purchase</p></div>
-                        <strong><fmt:formatNumber value="${item.subtotal}" type="currency" currencyCode="USD" /></strong>
+                        <div class="history-item-copy"><h3>${item.productName}</h3><p>${item.quantity} × <fmt:formatNumber value="${item.unitPrice}" pattern="₹#,##,##0.00" /> at purchase</p></div>
+                        <strong><fmt:formatNumber value="${item.subtotal}" pattern="₹#,##,##0.00" /></strong>
                     </article>
                 </c:forEach>
-                <div class="history-total"><span>Order total</span><strong><fmt:formatNumber value="${orderDetails.order.totalAmount}" type="currency" currencyCode="USD" /></strong></div>
+                <div class="history-total"><span>Order total</span><strong><fmt:formatNumber value="${orderDetails.order.totalAmount}" pattern="₹#,##,##0.00" /></strong></div>
             </section>
             <div class="order-page-actions"><a class="primary-button" href="${pageContext.request.contextPath}/products">Continue shopping</a><a class="secondary-button" href="${pageContext.request.contextPath}/orders">Back to orders</a></div>
         </c:otherwise>

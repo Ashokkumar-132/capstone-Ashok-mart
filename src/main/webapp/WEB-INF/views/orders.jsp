@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<fmt:setLocale value="en_IN"/>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -38,7 +39,7 @@
                             <div><p class="order-label">Order #${order.id}</p><h2>${order.createdAt}</h2></div>
                             <span class="order-status status-${fn:toLowerCase(order.status)}"><span class="status-dot" aria-hidden="true"></span>${order.status}</span>
                         </div>
-                        <div class="order-card-meta"><span>${order.itemCount} item<c:if test="${order.itemCount != 1}">s</c:if></span><strong><fmt:formatNumber value="${order.totalAmount}" type="currency" currencyCode="USD" /></strong></div>
+                        <div class="order-card-meta"><span>${order.itemCount} item<c:if test="${order.itemCount != 1}">s</c:if></span><strong><fmt:formatNumber value="${order.totalAmount}" pattern="₹#,##,##0.00" /></strong></div>
                         <a class="secondary-button order-details-link" href="${pageContext.request.contextPath}/orders/view?id=${order.id}">View details</a>
                     </article>
                 </c:forEach>

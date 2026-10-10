@@ -1,4 +1,5 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<script src="${pageContext.request.contextPath}/js/image-fallback.js" defer></script>
 <header class="site-header">
     <a class="brand" href="${pageContext.request.contextPath}/" aria-label="AshokMart home">Ashok<span>Mart</span></a>
     <form class="header-search" action="${pageContext.request.contextPath}/products" method="get" role="search">

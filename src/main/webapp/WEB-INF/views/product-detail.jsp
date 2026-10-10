@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<fmt:setLocale value="en_IN"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,14 +28,14 @@
             <section class="detail-card" aria-labelledby="product-heading">
                 <div class="detail-image">
                     <c:choose>
-                        <c:when test="${not empty product.imageUrl}"><img src="${product.imageUrl}" alt="${product.name}"></c:when>
+                        <c:when test="${not empty product.imageUrl}"><img data-image-fallback src="${product.imageUrl}" alt="${product.name}"></c:when>
                         <c:otherwise><span class="image-placeholder large-placeholder">Ashok<span>Mart</span></span></c:otherwise>
                     </c:choose>
                 </div>
                 <div class="detail-content">
                     <p class="product-category">${product.categoryName}</p>
                     <h1 id="product-heading">${product.name}</h1>
-                    <p class="detail-price"><fmt:formatNumber value="${product.price}" type="currency" currencyCode="USD" /></p>
+                    <p class="detail-price"><fmt:formatNumber value="${product.price}" pattern="₹#,##,##0.00" /></p>
                     <p class="detail-description"><c:out value="${product.description}" default="No description provided." /></p>
                     <dl class="detail-facts">
                         <div><dt>Seller</dt><dd>${product.sellerName}</dd></div>

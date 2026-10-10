@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<fmt:setLocale value="en_IN"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,22 +39,22 @@
                         <article class="checkout-item">
                             <div class="checkout-item-image">
                                 <c:choose>
-                                    <c:when test="${not empty item.imageUrl}"><img src="${item.imageUrl}" alt="${item.productName}"></c:when>
+                                    <c:when test="${not empty item.imageUrl}"><img data-image-fallback src="${item.imageUrl}" alt="${item.productName}"></c:when>
                                     <c:otherwise><span class="image-placeholder">Ashok<span>Mart</span></span></c:otherwise>
                                 </c:choose>
                             </div>
                             <div class="checkout-item-copy">
                                 <h3>${item.productName}</h3>
-                                <p>Quantity ${item.quantity} · <fmt:formatNumber value="${item.currentPrice}" type="currency" currencyCode="USD" /> each</p>
+                                <p>Quantity ${item.quantity} · <fmt:formatNumber value="${item.currentPrice}" pattern="₹#,##,##0.00" /> each</p>
                             </div>
-                            <strong><fmt:formatNumber value="${item.lineTotal}" type="currency" currencyCode="USD" /></strong>
+                            <strong><fmt:formatNumber value="${item.lineTotal}" pattern="₹#,##,##0.00" /></strong>
                         </article>
                     </c:forEach>
                 </section>
                 <aside class="checkout-summary" aria-labelledby="checkout-summary-heading">
                     <h2 id="checkout-summary-heading">Order summary</h2>
                     <div class="summary-row"><span>Items</span><span>${cart.itemCount}</span></div>
-                    <div class="summary-row total-row"><strong>Total</strong><strong><fmt:formatNumber value="${cart.subtotal}" type="currency" currencyCode="USD" /></strong></div>
+                    <div class="summary-row total-row"><strong>Total</strong><strong><fmt:formatNumber value="${cart.subtotal}" pattern="₹#,##,##0.00" /></strong></div>
                     <form action="${pageContext.request.contextPath}/checkout" method="post" onsubmit="this.querySelector('button').disabled=true;"><input type="hidden" name="_csrf" value="${sessionScope.csrfToken}">
                         <button class="primary-button" type="submit">Place order</button>
                     </form>

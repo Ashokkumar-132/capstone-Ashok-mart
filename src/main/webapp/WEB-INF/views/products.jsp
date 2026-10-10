@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<fmt:setLocale value="en_IN"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -93,7 +94,7 @@
                             <a class="product-image" href="${pageContext.request.contextPath}/product?id=${product.id}">
                                 <c:choose>
                                     <c:when test="${not empty product.imageUrl}">
-                                        <img src="${product.imageUrl}" alt="${product.name}">
+                                        <img data-image-fallback src="${product.imageUrl}" alt="${product.name}">
                                     </c:when>
                                     <c:otherwise>
                                         <span class="image-placeholder" aria-label="No product image">Ashok<span>Mart</span></span>
@@ -105,7 +106,7 @@
                                 <h3><a href="${pageContext.request.contextPath}/product?id=${product.id}">${product.name}</a></h3>
                                 <p class="product-description"><c:out value="${product.description}" default="No description provided." /></p>
                                 <div class="product-meta">
-                                    <span class="product-price"><fmt:formatNumber value="${product.price}" type="currency" currencyCode="USD" /></span>
+                                    <span class="product-price"><fmt:formatNumber value="${product.price}" pattern="₹#,##,##0.00" /></span>
                                     <c:choose>
                                         <c:when test="${product.inStock}"><span class="stock-badge in-stock">In stock · ${product.stockQuantity}</span></c:when>
                                         <c:otherwise><span class="stock-badge out-stock">Out of stock</span></c:otherwise>
