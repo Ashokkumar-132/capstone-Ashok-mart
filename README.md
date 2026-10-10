@@ -201,3 +201,25 @@ mvn package
 ```
 
 The generated WAR is written to `target/AshokMart.war` for Tomcat 9 or later Railway deployment through GitHub.
+
+## Catalog seed data
+
+The application includes a repeatable startup catalog seed in `src/main/resources/catalog-seed.psv`. After the schema is initialized, `ProductCatalogSeeder` reuses existing categories and an enabled seller, creates the catalog seller only when no enabled seller exists, and inserts the 150 distinct products transactionally through JDBC. Product names are used as the duplicate guard, so restarting the application preserves existing products, orders, carts, reviews, and user accounts without inserting duplicates or resetting data.
+
+The seed contains the following verified distribution:
+
+| Category | Products |
+| --- | ---: |
+| Electronics | 20 |
+| Fashion & Clothing | 20 |
+| Home & Kitchen | 20 |
+| Beauty & Personal Care | 15 |
+| Grocery & Food | 15 |
+| Sports & Fitness | 15 |
+| Books & Stationery | 15 |
+| Toys & Games | 10 |
+| Mobile Accessories | 10 |
+| Furniture & Home Decor | 10 |
+| **Total** | **150** |
+
+Every seeded row has a distinct name and description, an INR price, positive stock, a valid seller/category reference, and a category-matched Unsplash image URL. Catalog cards continue to use the existing responsive `object-fit: cover` styling and the existing image fallback behavior. Ratings and review counts remain database-derived; the seed does not invent reviews or ratings.

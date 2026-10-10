@@ -19,6 +19,7 @@ public final class DatabaseContextListener implements ServletContextListener {
         DatabaseConnectionPool pool = DatabaseConnectionPool.createDefault();
         try {
             DatabaseInitializer.initialize(pool);
+            ProductCatalogSeeder.seed(pool);
             event.getServletContext().setAttribute(DatabaseConnectionPool.CONTEXT_ATTRIBUTE, pool);
             LOGGER.info("AshokMart database infrastructure started");
         } catch (SQLException | IOException exception) {
